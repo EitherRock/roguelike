@@ -35,4 +35,34 @@ class MessageLog:
         else:
             self.messages.append(Message(text, fg))
 
-    
+    def render(
+            self, console: tcod.console, x: int, y: int, width: int, height: int,
+    ) -> None:
+        """Render this log over the given area.
+        `x`, `y`, `width`, `height` is the rectangular region to render onto
+        the `console`.
+        """
+
+        self.render_messages(console, x, y, width, height, self.messages)
+
+    @staticmethod
+    def render_messages(
+            console: tcod.console.Console,
+            x: int,
+            y: int,
+            width: int,
+            height: int,
+            messages: Reversible[Message],
+    ) -> None:
+        """REnder the messages provided.
+        The `messages` are rendered starting at the last message and working backwards.
+        """
+
+        y_offset = height - 1
+
+        for message in reversed(messages):
+            for line  in reversed(textwrap.wrap(message.full_text, width)):
+                console.print(x=x, y=y + y_offset, string=line, fg=message.fg)
+                y_offset -= 1
+                if y_offset < 0:
+                    return # No more space to print messages.
