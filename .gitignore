@@ -2,3 +2,5 @@ venv/
 venv_windows/
 *.pyc
 .idea/
+# Saved games
+*.sav
