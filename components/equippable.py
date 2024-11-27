@@ -14,12 +14,15 @@ class Equippable(BaseComponent):
         self,
         equipment_type: EquipmentType,
         power_bonus: int = 0,
-        defense_bonus: int = 0
+        defense_bonus: int = 0,
+        fov_bonus: int = 0
     ):
         self.equipment_type = equipment_type
 
         self.power_bonus = power_bonus
         self.defense_bonus = defense_bonus
+
+        self.fov_bonus = fov_bonus
 
 
 class Dagger(Equippable):
@@ -40,3 +43,8 @@ class LeatherArmor(Equippable):
 class ChainMail(Equippable):
     def __init__(self) -> None:
         super().__init__(equipment_type=EquipmentType.ARMOR, defense_bonus=3)
+
+
+class Lantern(Equippable):
+    def __init__(self) -> None:
+        super().__init__(equipment_type=EquipmentType.UTILITY, fov_bonus=5)
