@@ -2,10 +2,9 @@ from __future__ import annotations
 import random
 from typing import List, Optional, Tuple, TYPE_CHECKING
 
-import numpy as np  # type: ignore
+import numpy as np
 import tcod
 
-from actions import Action
 from actions import Action, BumpAction, MeleeAction, MovementAction, WaitAction
 
 if TYPE_CHECKING:
@@ -13,14 +12,12 @@ if TYPE_CHECKING:
 
 
 class BaseAI(Action):
-    entity: Actor
-
     def perform(self) -> None:
         raise NotImplementedError()
 
     def get_path_to(self, dest_x: int, dest_y: int, ) -> List[Tuple[int, int]]:
         """
-        Compute and return a path to the target posistion
+        Compute and return a path to the target position
 
         If there is no valid path then returns and empty list.
         """
@@ -30,20 +27,21 @@ class BaseAI(Action):
 
         for entity in self.entity.gamemap.entities:
             # Check that an entity blocks movement and the cost isn't zero (blocking.)
-            if entity.blocks_movement and cost[entity.x, entity.y]:
+            if entity.blocks_movement and cost[entity.x, entity.y]:  # warns theory: values not initialized yet
                 # Add to the cost of a blocked position
                 # A lower number means more enemies will crowd behind each other in
                 # hallways. A higher number means enemies will take longer paths in
                 # order to surround the player.
-                cost[entity.x, entity.y] += 10
+                cost[entity.x, entity.y] += 10  # warns theory: values not initialized yet
 
         # Create a graph from the cost array and pass that graph to a new pathfinder
-        graph = tcod.path.SimpleGraph(cost=cost, cardinal=2, diagonal=3)
+        graph = tcod.path.SimpleGraph(cost=cost, cardinal=2, diagonal=3)  # warns theory: values not initialized yet
         pathfinder = tcod.path.Pathfinder(graph)
 
         pathfinder.add_root((self.entity.x, self.entity.y))  # Start position
 
         # Compute the path to the destination and remove the starting point.
+        # warns theory: values not initialized yet
         path: List[List[int]] = pathfinder.path_to((dest_x, dest_y))[1:].tolist()
 
         # Convert from List[List[int]] to List[Tuple[int, int]]
@@ -91,6 +89,8 @@ class ConfusedEnemy(BaseAI):
             # The actor will either try to move or attack in the chosen random direction.
             # Its possible the actor will just bump into the wall, wasting a turn.
             return BumpAction(self.entity, direction_x, direction_y,).perform()
+
+
 class HostileEnemy(BaseAI):
     def __init__(self, entity: Actor):
         super().__init__(entity)

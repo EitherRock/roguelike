@@ -35,7 +35,7 @@ class Action:
 class PickupAction(Action):
     """Pickup an item and add it to the inventory, if there is room for it."""
 
-    def __int__(self, entity: Actor):
+    def __init__(self, entity: Actor):
         super().__init__(entity)
 
     def perform(self) -> None:
@@ -48,12 +48,12 @@ class PickupAction(Action):
                 if len(inventory.items) >= inventory.capacity:
                     raise exceptions.Impossible("Your inventory is full.")
 
-            self.engine.game_map.entities.remove(item)
-            item.parent = self.entity.inventory
-            inventory.items.append(item)
+                self.engine.game_map.entities.remove(item)
+                item.parent = self.entity.inventory
+                inventory.items.append(item)
 
-            self.engine.message_log.add_message(f"You picked up the {item.name}!")
-            return
+                self.engine.message_log.add_message(f"You picked up the {item.name}!")
+                return
 
         raise exceptions.Impossible("There is nothing here to pick up.")
 
@@ -145,7 +145,7 @@ class MeleeAction(ActionWithDirection):
     def perform(self) -> None:
         target = self.target_actor
         if not target:
-            return exceptions.Impossible("Nothing to attack.")
+            raise exceptions.Impossible("Nothing to attack.")
 
         damage = self.entity.fighter.power - target.fighter.defense
 
@@ -172,13 +172,13 @@ class MovementAction(ActionWithDirection):
 
         if not self.engine.game_map.in_bounds(dest_x, dest_y):
             # Destination is out of bounds.
-            return exceptions.Impossible("That way is blocked.")
+            raise exceptions.Impossible("That way is blocked.")
         if not self.engine.game_map.tiles["walkable"][dest_x, dest_y]:
             # Destination is blocked by a tile.
-            return exceptions.Impossible("That way is blocked.")
+            raise exceptions.Impossible("That way is blocked.")
         if self.engine.game_map.get_blocking_entity_at_location(dest_x, dest_y):
             # Destination is blocked by entity.
-            return exceptions.Impossible("That way is blocked.")
+            raise exceptions.Impossible("That way is blocked.")
 
         self.entity.move(self.dx, self.dy)
 

@@ -487,13 +487,18 @@ class SelectIndexHandler(AskUserEventHandler):
             return self.on_index_selected(*self.engine.mouse_location)
         return super().ev_keydown(event)
 
-    def ev_mousebuttondown(
-            self, event: tcod.event.MouseButtonDown
-    ) -> Optional[ActionOrHandler]:
+    def ev_mousebuttondown(self, event: tcod.event.MouseButtonDown) -> Optional[ActionOrHandler]:
         """Left click to confirm selection."""
-        if self.engine.game_map.in_bounds(*event.position):
+        # Get mouse position in pixels
+        x_pixel, y_pixel = event.position
+        tile_size = 10
+
+        x, y = x_pixel // tile_size, y_pixel // tile_size  # Convert to tile coordinates
+
+        if self.engine.game_map.in_bounds(x, y):
             if event.button == 1:
-                return self.on_index_selected(*event.position)
+                return self.on_index_selected(x, y)
+
         return super().ev_mousebuttondown(event)
 
     def on_index_selected(self, x: int, y: int) -> Optional[ActionOrHandler]:
@@ -552,6 +557,35 @@ class AreaRangedAttackHandler(SelectIndexHandler):
             fg=colors.red,
             clear=False
         )
+
+    # def on_render(self, console: tcod.console.Console) -> None:
+    #     """Highlight a cross with pyramid-like sides centered on the cursor."""
+    #     super().on_render(console)
+    #
+    #     x, y = self.engine.mouse_location
+    #
+    #     for i in range(self.radius + 1):
+    #         width = self.radius - i  # Width of the current layer
+    #
+    #         # Horizontal lines: only draw the endpoints (leftmost and rightmost)
+    #         if self.engine.game_map.in_bounds(x - width, y + i):
+    #             console.bg[y + i, x - width] = colors.red  # Bottom-left
+    #         if self.engine.game_map.in_bounds(x + width, y + i):
+    #             console.bg[y + i, x + width] = colors.red  # Bottom-right
+    #         if self.engine.game_map.in_bounds(x - width, y - i):
+    #             console.bg[y - i, x - width] = colors.red  # Top-left
+    #         if self.engine.game_map.in_bounds(x + width, y - i):
+    #             console.bg[y - i, x + width] = colors.red  # Top-right
+    #
+    #         # Vertical lines: only draw the endpoints (topmost and bottommost)
+    #         if self.engine.game_map.in_bounds(x + i, y - width):
+    #             console.bg[y - width, x + i] = colors.red  # Right-top
+    #         if self.engine.game_map.in_bounds(x + i, y + width):
+    #             console.bg[y + width, x + i] = colors.red  # Right-bottom
+    #         if self.engine.game_map.in_bounds(x - i, y - width):
+    #             console.bg[y - width, x - i] = colors.red  # Left-top
+    #         if self.engine.game_map.in_bounds(x - i, y + width):
+    #             console.bg[y + width, x - i] = colors.red  # Left-bottom
 
     def on_index_selected(self, x: int, y: int) -> Optional[Action]:
         return self.callback((x, y))

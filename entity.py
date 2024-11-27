@@ -1,6 +1,7 @@
 from __future__ import annotations
 import copy
 import math
+import time
 from typing import Optional, Tuple, Type, TypeVar, TYPE_CHECKING, Union
 
 from render_order import RenderOrder
@@ -43,6 +44,9 @@ class Entity:
         self.name = name
         self.blocks_movement = blocks_movement
         self.render_order = render_order
+        self.last_move_time = 0  # time of last movement
+        self.move_cooldown = 0.2  # cooldown in seconds
+
         if parent:
             # If parent isn't provided now then it will be set later.
             self.parent = parent
@@ -80,8 +84,11 @@ class Entity:
 
     def move(self, dx: int, dy: int) -> None:
         # Move the entity by a given amount
-        self.x += dx
-        self.y += dy
+        current_time = time.time()
+        if current_time - self.last_move_time >= self.move_cooldown:
+            self.x += dx
+            self.y += dy
+            self.last_move_time = current_time  # Update the last movement time
 
 
 class Actor(Entity):
