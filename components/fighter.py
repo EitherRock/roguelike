@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 import colors
 from components.base_component import BaseComponent
 from render_order import RenderOrder
@@ -11,11 +11,12 @@ if TYPE_CHECKING:
 class Fighter(BaseComponent):
     parent: Actor
 
-    def __init__(self, hp: int, base_defense: int, base_power: int):
+    def __init__(self, hp: int, base_defense: int, base_power: int, field_of_view: Optional[int] = None):
         self.max_hp = hp
         self._hp = hp
         self.base_defense = base_defense
         self.base_power = base_power
+        self.base_fov = field_of_view
 
     @property
     def hp(self) -> int:
@@ -36,6 +37,10 @@ class Fighter(BaseComponent):
         return self.base_power + self.power_bonus
 
     @property
+    def fov(self) -> int:
+        return self.base_fov + self.fov_bonus
+
+    @property
     def defense_bonus(self) -> int:
         if self.parent.equipment:
             return self.parent.equipment.defence_bonus
@@ -48,6 +53,14 @@ class Fighter(BaseComponent):
             return self.parent.equipment.power_bonus
         else:
             return 0
+
+    @property
+    def fov_bonus(self) -> int:
+        if self.parent.equipment:
+            return self.parent.equipment.fov_bonus
+        else:
+            return 0
+
     def die(self) -> None:
         if self.engine.player is self.parent:
             death_message = "You died!"

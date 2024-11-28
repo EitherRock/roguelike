@@ -1,6 +1,6 @@
 from __future__ import annotations
 from typing import Optional, TYPE_CHECKING
-from components.base_component import  BaseComponent
+from components.base_component import BaseComponent
 from equipments_types import EquipmentType
 
 if TYPE_CHECKING:
@@ -10,9 +10,15 @@ if TYPE_CHECKING:
 class Equipment(BaseComponent):
     parent: Actor
 
-    def __init__(self, weapon: Optional[Item] = None, armor: Optional[Item] = None):
+    def __init__(
+            self,
+            weapon: Optional[Item] = None,
+            armor: Optional[Item] = None,
+            utility: Optional[Item] = None
+    ):
         self.weapon = weapon
         self.armor = armor
+        self.utility = utility
 
     @property
     def defence_bonus(self) -> int:
@@ -34,11 +40,20 @@ class Equipment(BaseComponent):
 
         if self.armor is not None and self.armor.equippable is not None:
             bonus += self.armor.equippable.power_bonus
+        print(bonus)
+        return bonus
+
+    @property
+    def fov_bonus(self) -> int:
+        bonus = 0
+
+        if self.utility is not None and self.utility.equippable is not None:
+            bonus += self.utility.equippable.fov_bonus
 
         return bonus
 
     def item_is_equipped(self, item: Item) -> bool:
-        return self.weapon == item or self.armor == item
+        return self.weapon == item or self.armor == item or self.utility == item
 
     def unequip_message(self, item_name: str) -> None:
         self.parent.gamemap.engine.message_log.add_message(
@@ -75,6 +90,11 @@ class Equipment(BaseComponent):
             and equippable_item.equippable.equipment_type == EquipmentType.WEAPON
         ):
             slot = "weapon"
+        elif (
+            equippable_item.equippable
+            and equippable_item.equippable.equipment_type == EquipmentType.UTILITY
+        ):
+            slot = "utility"
         else:
             slot = "armor"
 
