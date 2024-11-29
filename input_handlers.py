@@ -197,6 +197,18 @@ class MainGameEnventHandler(EventHandler):
         elif key == tcod.event.KeySym.SLASH:
             return LookHandler(self.engine)
 
+        if action:
+            try:
+                action.perform()
+
+                self.engine.time_manager.progress_time()
+                print("Progressing time")
+                self.engine.time_manager.display_entities()
+                self.engine.update_fov()
+
+            except Exception as exc:
+                self.engine.message_log.add_message(str(exc), colors.error)
+
         # No valid key was pressed
         return action
 

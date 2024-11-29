@@ -11,11 +11,14 @@ import render_functions
 if TYPE_CHECKING:
     from entity import Actor
     from game_map import GameMap, DungeonWorld, OverWorld
+    from time_manager import TimeManager, GameTime
 
 
 class Engine:
     game_map: GameMap
     game_world: Union[DungeonWorld, OverWorld]
+    time_manager: TimeManager
+    game_time: GameTime
 
     def __init__(self, player: Actor):
         self.message_log = MessageLog()
@@ -65,6 +68,12 @@ class Engine:
             console=console,
             dungeon_level=dungeon_level,
             location=(0, 47),
+        )
+
+        render_functions.render_time(
+            console=console,
+            game_time=self.game_time,
+            location=(0, 49)
         )
 
         render_functions.render_names_at_mouse_location(

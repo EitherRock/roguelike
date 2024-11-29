@@ -12,7 +12,8 @@ player = Actor(
     name="Player",
     ai_cls=HostileEnemy,
     equipment=Equipment(),
-    fighter=Fighter(hp=30, base_defense=1, base_power=2, field_of_view=3),
+    # fighter=Fighter(hp=30, base_defense=1, base_power=2, field_of_view=3),
+    fighter=Fighter(hp=3000, base_defense=1, base_power=0, field_of_view=3),
     inventory=Inventory(capacity=26),
     level=Level(level_up_base=200)
 )

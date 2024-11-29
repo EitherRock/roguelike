@@ -203,6 +203,5 @@ class BumpAction(ActionWithDirection):
     def perform(self) -> None:
         if self.target_actor:
             return MeleeAction(self.entity, self.dx, self.dy).perform()
-
         else:
             return MovementAction(self.entity, self.dx, self.dy).perform()

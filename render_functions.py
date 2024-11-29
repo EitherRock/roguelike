@@ -6,6 +6,7 @@ if TYPE_CHECKING:
     from tcod import Console
     from engine import Engine
     from game_map import GameMap
+    from time_manager import GameTime
 
 
 def get_names_at_location(x: int, y: int, game_map: GameMap) -> str:
@@ -45,6 +46,16 @@ def render_dungeon_level(
     x, y = location
 
     console.print(x=x, y=y, string=f"Dungeon level: {dungeon_level}")
+
+
+def render_time(
+        console: Console, game_time: GameTime, location: Tuple[int, int]
+) -> None:
+    """
+    Render the current game time
+    """
+    x, y = location
+    console.print(x=x, y=y, string=f"Time: {str(game_time)}")
 
 
 def render_names_at_mouse_location(

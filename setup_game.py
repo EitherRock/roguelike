@@ -12,6 +12,7 @@ import entity_factories
 from game_map import DungeonWorld, OverWorld
 import input_handlers
 from tcod import libtcodpy
+from time_manager import TimeManager, GameTime
 
 
 # Load the background image and remove the apha channel.
@@ -30,6 +31,16 @@ def new_game() -> Engine:
     player = copy.deepcopy(entity_factories.player)
 
     engine = Engine(player=player)
+
+    engine.time_manager = TimeManager()
+    engine.game_time = GameTime()
+    engine.time_manager.register_timed_entity(
+        current=1000,
+        target=engine.game_time,
+        rate=engine.game_time.rate,
+        cost=engine.game_time.update
+    )
+
     engine.game_worlds["dungeon"] = DungeonWorld(
         engine=engine,
         max_rooms=max_rooms,
@@ -95,13 +106,13 @@ class MainMenu(input_handlers.BaseEventHandler):
         console.print(
             console.width // 2,
             console.height // 2 - 4,
-            "TOMBS OF THE ANCIENT KINGS",
+            "Dungeon Dive",
             fg=colors.menu_title,
             alignment=libtcodpy.CENTER,
         )
         console.print(
             console.width // 2,
-            console.height // 2,
+            console.height - 2,
             "By Nathan Lesmann",
             fg=colors.menu_title,
             alignment=libtcodpy.CENTER
