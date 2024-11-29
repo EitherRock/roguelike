@@ -40,7 +40,7 @@ class Equipment(BaseComponent):
 
         if self.armor is not None and self.armor.equippable is not None:
             bonus += self.armor.equippable.power_bonus
-        print(bonus)
+
         return bonus
 
     @property

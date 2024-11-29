@@ -9,7 +9,7 @@ import tcod
 import colors
 from engine import Engine
 import entity_factories
-from game_map import GameWorld
+from game_map import DungeonWorld, OverWorld
 import input_handlers
 from tcod import libtcodpy
 
@@ -30,18 +30,26 @@ def new_game() -> Engine:
     player = copy.deepcopy(entity_factories.player)
 
     engine = Engine(player=player)
-
-    engine.game_world = GameWorld(
+    engine.game_worlds["dungeon"] = DungeonWorld(
         engine=engine,
         max_rooms=max_rooms,
         room_min_size=room_min_size,
         room_max_size=room_max_size,
         map_width=map_width,
-        map_height=map_height,
+        map_height=map_height
     )
 
-    engine.game_world.generate_floor()
-    engine.update_fov()
+    engine.game_worlds["world"] = OverWorld(
+        engine=engine,
+        map_width=map_width,
+        map_height=map_height
+    )
+
+    engine.switch_maps("world")
+    engine.game_world = engine.active_map
+
+    # engine.game_world.generate_floor()
+    engine.game_world.generate()
 
     engine.message_log.add_message(
         "Hello and welcome, adventurer, to the dungeon!", colors.welcome_text

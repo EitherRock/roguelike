@@ -104,15 +104,31 @@ class WaitAction(Action):
 class TakeStairsAction(Action):
     def perform(self) -> None:
         """
-        Take the stairs, if any exist at the entity's location
+        Take the stairs, if any exist at the entity's location.
         """
         if (self.entity.x, self.entity.y) == self.engine.game_map.downstairs_location:
-            self.engine.game_world.generate_floor()
-            self.engine.message_log.add_message(
-                "You descend the staircase.", colors.descend
-            )
+            self.descend_stairs()
+        elif (self.entity.x, self.entity.y) == self.engine.game_map.upstairs_location:
+            self.ascend_stairs()
         else:
             raise exceptions.Impossible("There are no stairs here.")
+
+    def descend_stairs(self) -> None:
+        from game_map import OverWorld
+        """Handle descending stairs."""
+        if isinstance(self.engine.game_world, OverWorld):
+            self.engine.game_world.enter_dungeon()
+        else:
+            self.engine.game_world.descend_dungeon()
+
+    def ascend_stairs(self) -> None:
+        from game_map import DungeonWorld
+        """Handle ascending stairs."""
+        if isinstance(self.engine.game_world, DungeonWorld):
+            if self.engine.game_world.current_floor == 1:
+                self.engine.game_world.exit_dungeon()
+            else:
+                self.engine.game_world.ascend_dungeon()
 
 
 class ActionWithDirection(Action):
