@@ -43,7 +43,6 @@ class ConfusionConsumable(Consumable):
         self.number_of_turns = number_of_turns
 
     def get_action(self, consumer: Actor) -> SingleRangedAttackHandler:
-        print("actioin")
         self.engine.message_log.add_message(
             "Select a target location.", colors.needs_target
         )

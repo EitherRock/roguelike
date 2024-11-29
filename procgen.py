@@ -11,8 +11,13 @@ if TYPE_CHECKING:
     from entity import Entity
 
 
+# max_items_by_floor = [
+#     (1, 1),
+#     (4, 2)
+# ]
+
 max_items_by_floor = [
-    (1, 1),
+    (1, 2),
     (4, 2)
 ]
 
@@ -23,7 +28,13 @@ max_monsters_by_floor = [
 ]
 
 item_chances: Dict[int, List[Tuple[Entity, int]]] = {
-    0: [(entity_factories.health_potion, 35)],
+    0: [(entity_factories.health_potion, 35),
+        (entity_factories.confusion_scroll, 10),
+        (entity_factories.lightning_scroll, 25),
+        (entity_factories.fireball_scroll, 25),
+        (entity_factories.sword, 5),
+        (entity_factories.chain_mail, 15)
+        ],
     2: [(entity_factories.confusion_scroll, 10)],
     4: [(entity_factories.lightning_scroll, 25), (entity_factories.sword, 5)],
     6: [(entity_factories.fireball_scroll, 25), (entity_factories.chain_mail, 15)],
@@ -188,7 +199,9 @@ def generate_dungeon(
 
         if len(rooms) == 0:
             # The first room, where the player starts.
-            player.place(*new_room.center, dungeon)
+            player.place(*new_room.center, gamemap=dungeon)
+            dungeon.upstairs_location = new_room.center
+
         else:  # All rooms after the first.
             # Dig out a tunnel between this room and the previous one.
 
@@ -201,6 +214,7 @@ def generate_dungeon(
 
         dungeon.tiles[center_of_last_room] = tile_types.down_stairs
         dungeon.downstairs_location = center_of_last_room
+        dungeon.tiles[dungeon.upstairs_location] = tile_types.up_stairs
 
         # Finally, append the new room to the list.
         rooms.append(new_room)
