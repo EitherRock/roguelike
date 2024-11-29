@@ -95,13 +95,13 @@ class MainMenu(input_handlers.BaseEventHandler):
         console.print(
             console.width // 2,
             console.height // 2 - 4,
-            "TOMBS OF THE ANCIENT KINGS",
+            "DUNGEON DIVE",
             fg=colors.menu_title,
             alignment=libtcodpy.CENTER,
         )
         console.print(
             console.width // 2,
-            console.height // 2,
+            console.height - 2,
             "By Nathan Lesmann",
             fg=colors.menu_title,
             alignment=libtcodpy.CENTER
