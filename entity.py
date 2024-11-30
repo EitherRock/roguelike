@@ -34,8 +34,8 @@ class Entity:
             color: Tuple[int, int, int] = (255, 255, 255),
             blocks_movement: bool = False,
             name: str = "<Unnamed>",
-            render_order: RenderOrder = RenderOrder.CORPSE
-
+            render_order: RenderOrder = RenderOrder.CORPSE,
+            move_cooldown: float = 0.0
     ):
         self.x = x
         self.y = y
@@ -45,7 +45,7 @@ class Entity:
         self.blocks_movement = blocks_movement
         self.render_order = render_order
         self.last_move_time = 0  # time of last movement
-        self.move_cooldown = 0.2  # cooldown in seconds
+        self.move_cooldown = move_cooldown  # cooldown in seconds
 
         if parent:
             # If parent isn't provided now then it will be set later.
@@ -104,7 +104,8 @@ class Actor(Entity):
         equipment: Equipment,
         fighter: Fighter,
         inventory: Inventory,
-        level: Level
+        level: Level,
+        move_cooldown: float = 0.2
     ):
         super().__init__(
             x=x,
@@ -113,7 +114,8 @@ class Actor(Entity):
             color=color,
             name=name,
             blocks_movement=True,
-            render_order=RenderOrder.ACTOR
+            render_order=RenderOrder.ACTOR,
+            move_cooldown=move_cooldown
         )
 
         self.ai: Optional[BaseAI] = ai_cls(self)
