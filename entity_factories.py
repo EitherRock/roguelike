@@ -3,6 +3,7 @@ from components import consumable, equippable
 from components.equipment import Equipment
 from components.fighter import Fighter
 from components.inventory import Inventory
+from spawn_types import SpawnType
 from components.level import Level
 from entity import Actor, Item
 
@@ -12,10 +13,36 @@ player = Actor(
     name="Player",
     ai_cls=HostileEnemy,
     equipment=Equipment(),
-    fighter=Fighter(hp=30, base_defense=1, base_power=2, field_of_view=3),
+    fighter=Fighter(hp=100, base_defense=1, base_power=2, field_of_view=3),
     inventory=Inventory(capacity=26),
     level=Level(level_up_base=200),
     move_cooldown=.3
+)
+
+rat = Actor(
+    char="r",
+    color=(72, 72, 72),
+    name="Rat",
+    ai_cls=HostileEnemy,
+    equipment=Equipment(),
+    fighter=Fighter(hp=5, base_defense=0, base_power=3, field_of_view=0),
+    inventory=Inventory(capacity=0),
+    level=Level(xp_given=15),
+    move_cooldown=.2,
+    spawn_type=SpawnType.SWARM
+)
+
+goblin = Actor(
+    char="g",
+    color=(58, 130, 58),
+    name="Goblin",
+    ai_cls=HostileEnemy,
+    equipment=Equipment(),
+    fighter=Fighter(hp=8, base_defense=0, base_power=5, field_of_view=0),
+    inventory=Inventory(capacity=0),
+    level=Level(xp_given=20),
+    move_cooldown=.4,
+    spawn_type=SpawnType.DOUBLE
 )
 
 orc = Actor(
@@ -24,7 +51,7 @@ orc = Actor(
     name="Orc",
     ai_cls=HostileEnemy,
     equipment=Equipment(),
-    fighter=Fighter(hp=10, base_defense=0, base_power=3, field_of_view=0),
+    fighter=Fighter(hp=10, base_defense=0, base_power=8, field_of_view=0),
     inventory=Inventory(capacity=0),
     level=Level(xp_given=35),
     move_cooldown=.6
@@ -36,7 +63,7 @@ troll = Actor(
     name="Troll",
     ai_cls=HostileEnemy,
     equipment=Equipment(),
-    fighter=Fighter(hp=16, base_defense=1, base_power=4, field_of_view=0),
+    fighter=Fighter(hp=16, base_defense=1, base_power=10, field_of_view=0),
     inventory=Inventory(capacity=0),
     level=Level(xp_given=100),
     move_cooldown=1

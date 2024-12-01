@@ -3,6 +3,7 @@ import copy
 import math
 import time
 from typing import Optional, Tuple, Type, TypeVar, TYPE_CHECKING, Union
+from spawn_types import SpawnType
 
 from render_order import RenderOrder
 
@@ -35,7 +36,8 @@ class Entity:
             blocks_movement: bool = False,
             name: str = "<Unnamed>",
             render_order: RenderOrder = RenderOrder.CORPSE,
-            move_cooldown: float = 0.0
+            move_cooldown: float = 0.0,
+            spawn_type: SpawnType = SpawnType.SINGLE
     ):
         self.x = x
         self.y = y
@@ -46,6 +48,7 @@ class Entity:
         self.render_order = render_order
         self.last_move_time = 0  # time of last movement
         self.move_cooldown = move_cooldown  # cooldown in seconds
+        self.spawn_type = spawn_type
 
         if parent:
             # If parent isn't provided now then it will be set later.
@@ -64,6 +67,7 @@ class Entity:
         clone.parent = gamemap
         gamemap.entities.add(clone)
         return clone
+
 
     def place(self, x: int, y: int, gamemap: Optional[GameMap] = None) -> None:
         """Place this entity at a new location. Handles moving across GameMaps."""
@@ -105,7 +109,8 @@ class Actor(Entity):
         fighter: Fighter,
         inventory: Inventory,
         level: Level,
-        move_cooldown: float = 0.2
+        move_cooldown: float = 0.2,
+        spawn_type: SpawnType = SpawnType.SINGLE
     ):
         super().__init__(
             x=x,
@@ -115,7 +120,8 @@ class Actor(Entity):
             name=name,
             blocks_movement=True,
             render_order=RenderOrder.ACTOR,
-            move_cooldown=move_cooldown
+            move_cooldown=move_cooldown,
+            spawn_type=spawn_type
         )
 
         self.ai: Optional[BaseAI] = ai_cls(self)

@@ -5,24 +5,20 @@ import tcod
 import entity_factories
 from game_map import GameMap
 import tile_types
+from spawn_types import SpawnType
 
 if TYPE_CHECKING:
     from engine import Engine
     from entity import Entity
 
 
-# max_items_by_floor = [
-#     (1, 1),
-#     (4, 2)
-# ]
-
 max_items_by_floor = [
-    (1, 2),
+    (1, 1),
     (4, 2)
 ]
 
 max_monsters_by_floor = [
-    (1, 2),
+    (1, 1),
     (4, 3),
     (6, 5)
 ]
@@ -41,7 +37,7 @@ item_chances: Dict[int, List[Tuple[Entity, int]]] = {
 }
 
 enemy_chances: Dict[int, List[Tuple[Entity, int]]] = {
-    0: [(entity_factories.orc, 80)],
+    0: [(entity_factories.orc, 60), (entity_factories.rat, 80), (entity_factories.goblin, 50)],
     3: [(entity_factories.troll, 15)],
     5: [(entity_factories.troll, 30)],
     7: [(entity_factories.troll, 60)],
@@ -119,6 +115,7 @@ class RectangularRoom:
 
 
 def place_entities(room: RectangularRoom, dungeon: GameMap, floor_number: int,) -> None:
+    # How many monsters can spawn in the room?
     number_of_monsters = random.randint(
         0, get_max_value_for_floor(max_monsters_by_floor, floor_number)
     )
@@ -127,6 +124,7 @@ def place_entities(room: RectangularRoom, dungeon: GameMap, floor_number: int,) 
         0, get_max_value_for_floor(max_items_by_floor, floor_number)
     )
 
+    # add monster to list per the amount that can be in the room
     monsters: List[Entity] = get_entities_at_random(
         enemy_chances, number_of_monsters, floor_number
     )
@@ -134,12 +132,103 @@ def place_entities(room: RectangularRoom, dungeon: GameMap, floor_number: int,) 
         item_chances, number_of_items, floor_number
     )
 
-    for entitty in monsters + items:
+    # Spawn items
+    for entity in items:
+        spawn_single(entity, dungeon, room)
+
+    # Spawn Monsters
+    for entity in monsters:
+        if entity.spawn_type == SpawnType.SINGLE:
+            spawn_single(entity, dungeon, room)
+
+        elif entity.spawn_type == SpawnType.DOUBLE:
+            spawn_double(entity, dungeon, room)
+
+        elif entity.spawn_type == SpawnType.TRIPLE:
+            spawn_triple(entity, dungeon, room)
+
+        elif entity.spawn_type == SpawnType.SWARM:
+            spawn_swarm(entity, dungeon, room)
+        else:
+            spawn_single(entity, dungeon, room)
+
+
+def spawn_single(entity: Entity, dungeon: GameMap, room: RectangularRoom) -> None:
+    """
+    Spawn a single entity within the given room.
+
+    Args:
+        entity: The entity to spawn.
+        dungeon: The game map where the entity will be placed.
+        room: The room where the entity will be spawned.
+    """
+    x = random.randint(room.x1 + 1, room.x2 - 1)
+    y = random.randint(room.y1 + 1, room.y2 - 1)
+
+    # Ensure no entity is already at the chosen location
+    if not any(existing_entity.x == x and existing_entity.y == y for existing_entity in dungeon.entities):
+        entity.spawn(dungeon, x, y)
+
+
+def spawn_double(entity: Entity, dungeon: GameMap, room: RectangularRoom) -> None:
+    """
+    Spawn two of an entity within the given room.
+
+    Args:
+        entity: The entity to spawn.
+        dungeon: The game map where the entity will be placed.
+        room: The room where the entity will be spawned.
+    """
+    for _ in range(2):
         x = random.randint(room.x1 + 1, room.x2 - 1)
         y = random.randint(room.y1 + 1, room.y2 - 1)
 
-        if not any(entity.x == x and entity.y == y for entity in dungeon.entities):
-            entitty.spawn(dungeon, x, y)
+        # Ensure no entity is already at the chosen location
+        if not any(existing_entity.x == x and existing_entity.y == y for existing_entity in dungeon.entities):
+            entity.spawn(dungeon, x, y)
+
+
+def spawn_triple(entity: Entity, dungeon: GameMap, room: RectangularRoom) -> None:
+    """
+    Spawn three of an entity within the given room.
+
+    Args:
+        entity: The entity to spawn.
+        dungeon: The game map where the entity will be placed.
+        room: The room where the entity will be spawned.
+    """
+    for _ in range(3):
+        x = random.randint(room.x1 + 1, room.x2 - 1)
+        y = random.randint(room.y1 + 1, room.y2 - 1)
+
+        # Ensure no entity is already at the chosen location
+        if not any(existing_entity.x == x and existing_entity.y == y for existing_entity in dungeon.entities):
+            entity.spawn(dungeon, x, y)
+
+
+def spawn_swarm(
+    entity: Entity,
+    dungeon: GameMap,
+    room: RectangularRoom
+) -> None:
+    """
+    Spawns a swarm of the same entity within the given room at random positions.
+
+    :param entity: The entity to spawn as part of the swarm.
+    :param room: The room where the swarm will spawn.
+    :param dungeon: The game map where the entities will be placed.
+    """
+    amount = random.randint(3, 5)
+    for _ in range(amount):
+        x = random.randint(room.x1 + 1, room.x2 - 1)
+        y = random.randint(room.y1 + 1, room.y2 - 1)
+
+        if not any(existing_entity.x == x and existing_entity.y == y for existing_entity in dungeon.entities):
+            print("Spawning Swarm")
+            entity.spawn(dungeon, x, y)
+
+
+
 
 
 def tunnel_between(
