@@ -19,8 +19,8 @@ max_items_by_floor = [
 
 max_monsters_by_floor = [
     (1, 1),
-    (4, 3),
-    (6, 5)
+    (4, 2),
+    (6, 3)
 ]
 
 item_chances: Dict[int, List[Tuple[Entity, int]]] = {
