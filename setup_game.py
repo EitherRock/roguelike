@@ -56,15 +56,20 @@ def new_game() -> Engine:
     )
 
     dagger = copy.deepcopy(entity_factories.dagger)
+    club = copy.deepcopy(entity_factories.club)
     leather_armor = copy.deepcopy(entity_factories.leather_armor)
     lantern = copy.deepcopy(entity_factories.lantern)
 
     dagger.parent = player.inventory
+    club.parent = player.inventory
     leather_armor.parent = player.inventory
     lantern.parent = player.inventory
 
     player.inventory.items.append(dagger)
     player.equipment.toggle_equip(dagger, add_message=False)
+
+    player.inventory.items.append(club)
+    player.equipment.toggle_equip(club, add_message=False)
 
     player.inventory.items.append(leather_armor)
     player.equipment.toggle_equip(leather_armor, add_message=False)

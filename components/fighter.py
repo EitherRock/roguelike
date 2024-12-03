@@ -1,7 +1,9 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Optional, List
 import colors
 from components.base_component import BaseComponent
+from enums.damage_types import DamageType
+from enums.weapon_types import WeaponType
 from render_order import RenderOrder
 
 if TYPE_CHECKING:
@@ -11,12 +13,31 @@ if TYPE_CHECKING:
 class Fighter(BaseComponent):
     parent: Actor
 
-    def __init__(self, hp: int, base_defense: int, base_power: int, field_of_view: Optional[int] = None):
+    def __init__(
+            self,
+            hp: int,
+            base_defense: int,
+            base_power: int,
+            resistances: Optional[List[DamageType]] = None,
+            immunities: Optional[List[DamageType]] = None,
+            allowed_weapon_types: Optional[List[WeaponType]] = None,
+            field_of_view: Optional[int] = None
+    ):
         self.max_hp = hp
         self._hp = hp
         self.base_defense = base_defense
         self.base_power = base_power
         self.base_fov = field_of_view
+        self.resistances = resistances or []
+        self.immunities = immunities or []
+        self._allowed_weapon_types = allowed_weapon_types or []
+
+    @property
+    def allowed_weapon_types(self) -> List[WeaponType]:
+        # Always include UNARMED in the list
+        if WeaponType.UNARMED not in self._allowed_weapon_types:
+            self._allowed_weapon_types.append(WeaponType.UNARMED)
+        return self._allowed_weapon_types
 
     @property
     def hp(self) -> int:
@@ -42,10 +63,10 @@ class Fighter(BaseComponent):
 
     @property
     def defense_bonus(self) -> int:
+        bonus = 0
         if self.parent.equipment:
-            return self.parent.equipment.defence_bonus
-        else:
-            return 0
+            bonus += self.parent.equipment.defence_bonus
+        return bonus
 
     @property
     def power_bonus(self) -> int:
@@ -94,8 +115,29 @@ class Fighter(BaseComponent):
 
         return amount_recovered
 
-    def take_damage(self, amount: int) -> None:
-        self.hp -= amount
+    def take_damage(self, amount: int, damage_type: DamageType, desc: str) -> None:
+        if self is self.engine.player:
+            attack_color = colors.player_atk
+        else:
+            attack_color = colors.enemy_atk
 
+        if damage_type in self.resistances:
+            amount = amount // 2
+            self.hp -= max(0, int(amount))
+            self.engine.message_log.add_message(
+                f"{desc} but {self.parent.name} is RESISTANT to {damage_type.name} and only takes {amount} damage.",
+                attack_color
+            )
+        elif damage_type in self.immunities:
+            if self != self.engine.player:
+                self.engine.message_log.add_message(
+                    f"{desc} but {self.parent.name} is IMMUNE to {damage_type.name} damage!",
+                    attack_color
+                )
+        else:
+            self.hp -= max(0, int(amount))
+            self.engine.message_log.add_message(
+                f"{desc} for {amount} hit points.", attack_color
+            )
 
 

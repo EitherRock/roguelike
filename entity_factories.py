@@ -3,9 +3,12 @@ from components import consumable, equippable
 from components.equipment import Equipment
 from components.fighter import Fighter
 from components.inventory import Inventory
-from spawn_types import SpawnType
+from enums.spawn_types import SpawnType
 from components.level import Level
 from entity import Actor, Item
+from enums.weapon_types import WeaponType
+from enums.damage_types import DamageType
+
 
 player = Actor(
     char="@",
@@ -25,8 +28,8 @@ rat = Actor(
     name="Rat",
     ai_cls=HostileEnemy,
     equipment=Equipment(),
-    fighter=Fighter(hp=5, base_defense=0, base_power=3, field_of_view=0),
-    inventory=Inventory(capacity=0),
+    fighter=Fighter(hp=5, base_defense=0, base_power=3, field_of_view=0, immunities=[DamageType.SLASHING, DamageType.LIGHTNING]),
+    inventory=Inventory(capacity=1),
     level=Level(xp_given=15),
     move_cooldown=.2,
     spawn_type=SpawnType.SWARM
@@ -39,7 +42,7 @@ goblin = Actor(
     ai_cls=HostileEnemy,
     equipment=Equipment(),
     fighter=Fighter(hp=8, base_defense=0, base_power=5, field_of_view=0),
-    inventory=Inventory(capacity=0),
+    inventory=Inventory(capacity=1),
     level=Level(xp_given=20),
     move_cooldown=.4,
     spawn_type=SpawnType.DOUBLE
@@ -51,8 +54,8 @@ orc = Actor(
     name="Orc",
     ai_cls=HostileEnemy,
     equipment=Equipment(),
-    fighter=Fighter(hp=10, base_defense=0, base_power=8, field_of_view=0),
-    inventory=Inventory(capacity=0),
+    fighter=Fighter(hp=10, base_defense=0, base_power=8, field_of_view=0, resistances=[DamageType.BLUDGEONING]),
+    inventory=Inventory(capacity=1),
     level=Level(xp_given=35),
     move_cooldown=.6
 )
@@ -63,8 +66,14 @@ troll = Actor(
     name="Troll",
     ai_cls=HostileEnemy,
     equipment=Equipment(),
-    fighter=Fighter(hp=16, base_defense=1, base_power=10, field_of_view=0),
-    inventory=Inventory(capacity=0),
+    fighter=Fighter(
+        hp=16,
+        base_defense=1,
+        base_power=10,
+        field_of_view=0,
+        resistances=[DamageType.BLUDGEONING, DamageType.SLASHING]
+    ),
+    inventory=Inventory(capacity=1),
     level=Level(xp_given=100),
     move_cooldown=1
 )
@@ -101,6 +110,10 @@ dagger = Item(char="/", color=(0, 191, 255), name="Dagger", equippable=equippabl
 
 sword = Item(char="/", color=(0, 191, 255), name="Sword", equippable=equippable.Sword())
 
+club = Item(char="/", color=(0, 191, 255), name="Club", equippable=equippable.Club())
+
+unarmed = Item(char="/", color=(0, 191, 255), name="Unarmed", equippable=equippable.Unarmed())
+
 leather_armor = Item(
     char="[",
     color=(139, 69, 19),
@@ -116,4 +129,9 @@ lantern = Item(
     char="*", color=(255, 255, 0), name="Lantern", equippable=equippable.Lantern()
 )
 
-
+weapon_factory = {
+    WeaponType.DAGGER: dagger,
+    WeaponType.UNARMED: unarmed,
+    WeaponType.SWORD: sword,
+    WeaponType.CLUB: club
+}

@@ -5,7 +5,7 @@ import tcod
 import entity_factories
 from game_map import GameMap
 import tile_types
-from spawn_types import SpawnType
+from enums.spawn_types import SpawnType
 
 if TYPE_CHECKING:
     from engine import Engine
@@ -224,11 +224,7 @@ def spawn_swarm(
         y = random.randint(room.y1 + 1, room.y2 - 1)
 
         if not any(existing_entity.x == x and existing_entity.y == y for existing_entity in dungeon.entities):
-            print("Spawning Swarm")
             entity.spawn(dungeon, x, y)
-
-
-
 
 
 def tunnel_between(

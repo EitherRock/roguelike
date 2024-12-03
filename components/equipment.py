@@ -1,7 +1,8 @@
 from __future__ import annotations
 from typing import Optional, TYPE_CHECKING
 from components.base_component import BaseComponent
-from equipments_types import EquipmentType
+from enums.equipments_types import EquipmentType
+from enums.damage_types import DamageType
 
 if TYPE_CHECKING:
     from entity import Actor, Item
@@ -21,6 +22,12 @@ class Equipment(BaseComponent):
         self.utility = utility
 
     @property
+    def damage_type(self) -> Optional[DamageType]:
+        from components.equippable import Weapon
+        if self.weapon and isinstance(self.weapon, Weapon):
+            return self.weapon.damage_type
+
+    @property
     def defence_bonus(self) -> int:
         bonus = 0
 
@@ -37,7 +44,6 @@ class Equipment(BaseComponent):
 
         if self.weapon is not None and self.weapon.equippable is not None:
             bonus += self.weapon.equippable.power_bonus
-
         if self.armor is not None and self.armor.equippable is not None:
             bonus += self.armor.equippable.power_bonus
 
@@ -85,6 +91,7 @@ class Equipment(BaseComponent):
         setattr(self, slot, None)
 
     def toggle_equip(self, equippable_item: Item, add_message: bool = True) -> None:
+
         if (
             equippable_item.equippable
             and equippable_item.equippable.equipment_type == EquipmentType.WEAPON
@@ -102,3 +109,6 @@ class Equipment(BaseComponent):
             self.unequip_from_slot(slot, add_message)
         else:
             self.equip_to_slot(slot, equippable_item, add_message)
+
+    def __str__(self):
+        return f"Weapon: {self.weapon}, Armor: {self.armor}"
