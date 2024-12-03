@@ -10,7 +10,6 @@ class Message:
         self.fg = fg
         self.count = 1
 
-
     @property
     def full_text(self) -> str:
         """The full text of this message, including the count if necessary."""
@@ -70,8 +69,8 @@ class MessageLog:
         y_offset = height - 1
 
         for message in reversed(messages):
-            for line  in reversed(list(cls.wrap(message.full_text, width))):
+            for line in reversed(list(cls.wrap(message.full_text, width))):
                 console.print(x=x, y=y + y_offset, string=line, fg=message.fg)
                 y_offset -= 1
                 if y_offset < 0:
-                    return # No more space to print messages.
+                    return  # No more space to print messages.

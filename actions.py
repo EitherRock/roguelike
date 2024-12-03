@@ -159,6 +159,7 @@ class ActionWithDirection(Action):
 
 class MeleeAction(ActionWithDirection):
     def perform(self) -> None:
+        from components.equippable import Weapon
         target = self.target_actor
         if not target:
             raise exceptions.Impossible("Nothing to attack.")
@@ -166,20 +167,11 @@ class MeleeAction(ActionWithDirection):
         damage = self.entity.fighter.power - target.fighter.defense
 
         attack_desc = f"{self.entity.name.capitalize()} attacks {target.name}"
-        if self.entity is self.engine.player:
-            attack_color = colors.player_atk
-        else:
-            attack_color = colors.enemy_atk
 
-        if damage > 0:
-            self.engine.message_log.add_message(
-                f"{attack_desc} for {damage} hit points.", attack_color
-            )
-            target.fighter.hp -= damage
-        else:
-            self.engine.message_log.add_message(
-                f"{attack_desc} but does no damage.", attack_color
-            )
+        if isinstance(self.entity.equipment.weapon.equippable, Weapon):
+            damage_type = self.entity.equipment.weapon.equippable.damage_type
+            if damage_type:
+                target.fighter.take_damage(damage, damage_type, attack_desc)
 
 
 class MovementAction(ActionWithDirection):

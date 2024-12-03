@@ -1,9 +1,10 @@
 from __future__ import annotations
 import copy
 import math
+import random
 import time
 from typing import Optional, Tuple, Type, TypeVar, TYPE_CHECKING, Union
-from spawn_types import SpawnType
+from enums.spawn_types import SpawnType
 
 from render_order import RenderOrder
 
@@ -15,7 +16,9 @@ if TYPE_CHECKING:
     from components.fighter import Fighter
     from components.inventory import Inventory
     from components.level import Level
+    from enums.weapon_types import WeaponType
     from game_map import GameMap
+    from entity_factories import weapon_factory
 
 T = TypeVar("T", bound="Entity")
 
@@ -61,13 +64,29 @@ class Entity:
 
     def spawn(self: T, gamemap: GameMap, x: int, y: int) -> T:
         """Spawn a copy of this instance at the given location."""
+        from components.fighter import Fighter
+
         clone = copy.deepcopy(self)
         clone.x = x
         clone.y = y
         clone.parent = gamemap
+
+        if isinstance(clone, Actor) and isinstance(clone.fighter, Fighter):
+            if clone.fighter.allowed_weapon_types:
+                random_weapon = random.choice(clone.fighter.allowed_weapon_types)
+                self.add_weapon(clone, random_weapon)
+
         gamemap.entities.add(clone)
         return clone
 
+    def add_weapon(self, clone, weapon_choice) -> None:
+        from entity_factories import weapon_factory
+        if weapon_choice in weapon_factory:
+            weapon = copy.deepcopy(weapon_factory.get(weapon_choice))
+            if weapon:
+                weapon.parent = clone.inventory
+                clone.inventory.items.append(weapon)
+                clone.equipment.toggle_equip(weapon, add_message=False)
 
     def place(self, x: int, y: int, gamemap: Optional[GameMap] = None) -> None:
         """Place this entity at a new location. Handles moving across GameMaps."""
@@ -175,3 +194,6 @@ class Item(Entity):
 
         if self.equippable:
             self.equippable.parent = self
+
+    def __str__(self):
+        return f"Name: {self.name}, equippable: {self.equippable}"

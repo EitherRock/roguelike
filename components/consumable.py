@@ -4,6 +4,7 @@ import actions
 import colors
 import components.ai
 import components.inventory
+from enums.damage_types import DamageType
 from components.base_component import BaseComponent
 from exceptions import Impossible
 from input_handlers import (
@@ -114,10 +115,8 @@ class FireballDamageConsumable(Consumable):
         targets_hit = False
         for actor in self.engine.game_map.actors:
             if actor.distance(*target_xy) <= self.radius:
-                self.engine.message_log.add_message(
-                    f"The {actor.name} is engulfed in a fiery explosion, taking {self.damage} damage!"
-                )
-                actor.fighter.take_damage(self.damage)
+                desc = f"The {actor.name} is engulfed in a fiery explosion,"
+                actor.fighter.take_damage(self.damage, DamageType.FIRE, desc)
                 targets_hit = True
 
         if not targets_hit:
@@ -144,10 +143,8 @@ class LightningDamageConsumable(Consumable):
                     closest_distance = distance
 
         if target:
-            self.engine.message_log.add_message(
-                f"A lightning bolt strikes the {target.name} with a loud thunder, for {self.damage} damage!"
-            )
-            target.fighter.take_damage(self.damage)
+            desc = f"A lightning bolt strikes the {target.name} with a loud thunder,"
+            target.fighter.take_damage(self.damage, DamageType.LIGHTNING, desc)
             self.consume()
         else:
             raise Impossible("No enemy is close enough to strike.")
