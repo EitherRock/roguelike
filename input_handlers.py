@@ -1,6 +1,6 @@
 from __future__ import annotations
 import os
-from typing import Callable, Optional, Tuple, TYPE_CHECKING, Union
+from typing import Callable, Optional, Tuple, TYPE_CHECKING, Union, List
 import tcod.event
 from tcod import libtcodpy
 import actions
@@ -196,6 +196,8 @@ class MainGameEnventHandler(EventHandler):
             return CharacterScreenEventHandler(self.engine)
         elif key == tcod.event.KeySym.SLASH:
             return LookHandler(self.engine)
+        elif key == tcod.event.KeySym.r:
+            return SingleAutoRangedAttackHandler(self.engine)
 
         # No valid key was pressed
         return action
@@ -528,6 +530,55 @@ class SingleRangedAttackHandler(SelectIndexHandler):
         return self.callback((x, y))
 
 
+class SingleAutoRangedAttackHandler(AskUserEventHandler):
+    """Handles auto selecting entities for ranged combat"""
+
+    def __init__(self, engine: Engine):
+        """Sets the cursor to the player when this handler is constructed."""
+        super().__init__(engine)
+        self.player = engine.player
+        self.in_range_actors: List = []
+        self.index = 0
+        self.selected_actor = None
+
+    def collect_actors(self, maximum_range: int):
+        closest_distance = maximum_range + 1.0
+        for actor in self.engine.game_map.actors:
+            if actor is not self.player and actor.parent.visible[actor.x, actor.y]:
+                distance = self.player.distance(actor.x, actor.y)
+
+                if distance < closest_distance:
+                    self.in_range_actors.append(actor)
+
+        if len(self.in_range_actors):
+            self.selected_actor = self.in_range_actors[0]
+
+        print(self.in_range_actors)
+
+    def ev_keydown(self, event: tcod.event.KeyDown) -> Optional[ActionOrHandler]:
+        action: Optional[Action] = None
+        self.collect_actors(10)
+        if event.sym == event.sym.r:
+            print("here")
+            if self.in_range_actors:
+                self.index += 1
+                if self.index != len(self.in_range_actors) - 1:
+                    self.selected_actor = self.in_range_actors[self.index]
+                    print(self.selected_actor)
+        elif event.sym == event.sym.ESCAPE:
+            return self.on_exit()
+        return action
+
+    def on_render(self, console: tcod.Console) -> None:
+        super().on_render(console)
+        if self.selected_actor:
+            x = self.selected_actor.x
+            y = self.selected_actor.y
+
+            console.rgb['bg'][x, y] = colors.white
+            console.rgb['fg'][x, y] = colors.black
+
+
 class AreaRangedAttackHandler(SelectIndexHandler):
     """Handles targeting an area within a given radius. Any entity within the area will be affected."""
 
@@ -557,35 +608,6 @@ class AreaRangedAttackHandler(SelectIndexHandler):
             fg=colors.red,
             clear=False
         )
-
-    # def on_render(self, console: tcod.console.Console) -> None:
-    #     """Highlight a cross with pyramid-like sides centered on the cursor."""
-    #     super().on_render(console)
-    #
-    #     x, y = self.engine.mouse_location
-    #
-    #     for i in range(self.radius + 1):
-    #         width = self.radius - i  # Width of the current layer
-    #
-    #         # Horizontal lines: only draw the endpoints (leftmost and rightmost)
-    #         if self.engine.game_map.in_bounds(x - width, y + i):
-    #             console.bg[y + i, x - width] = colors.red  # Bottom-left
-    #         if self.engine.game_map.in_bounds(x + width, y + i):
-    #             console.bg[y + i, x + width] = colors.red  # Bottom-right
-    #         if self.engine.game_map.in_bounds(x - width, y - i):
-    #             console.bg[y - i, x - width] = colors.red  # Top-left
-    #         if self.engine.game_map.in_bounds(x + width, y - i):
-    #             console.bg[y - i, x + width] = colors.red  # Top-right
-    #
-    #         # Vertical lines: only draw the endpoints (topmost and bottommost)
-    #         if self.engine.game_map.in_bounds(x + i, y - width):
-    #             console.bg[y - width, x + i] = colors.red  # Right-top
-    #         if self.engine.game_map.in_bounds(x + i, y + width):
-    #             console.bg[y + width, x + i] = colors.red  # Right-bottom
-    #         if self.engine.game_map.in_bounds(x - i, y - width):
-    #             console.bg[y - width, x - i] = colors.red  # Left-top
-    #         if self.engine.game_map.in_bounds(x - i, y + width):
-    #             console.bg[y + width, x - i] = colors.red  # Left-bottom
 
     def on_index_selected(self, x: int, y: int) -> Optional[Action]:
         return self.callback((x, y))
