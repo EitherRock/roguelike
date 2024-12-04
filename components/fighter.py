@@ -18,6 +18,7 @@ class Fighter(BaseComponent):
             hp: int,
             base_defense: int,
             base_power: int,
+            base_attack_range: int = 4,
             resistances: Optional[List[DamageType]] = None,
             immunities: Optional[List[DamageType]] = None,
             allowed_weapon_types: Optional[List[WeaponType]] = None,
@@ -28,6 +29,7 @@ class Fighter(BaseComponent):
         self.base_defense = base_defense
         self.base_power = base_power
         self.base_fov = field_of_view
+        self.base_attack_range = base_attack_range
         self.resistances = resistances or []
         self.immunities = immunities or []
         self._allowed_weapon_types = allowed_weapon_types or []
@@ -60,6 +62,10 @@ class Fighter(BaseComponent):
     @property
     def fov(self) -> int:
         return self.base_fov + self.fov_bonus
+
+    @property
+    def ranged_attack_range(self) -> int:
+        return self.base_attack_range
 
     @property
     def defense_bonus(self) -> int:

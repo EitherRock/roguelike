@@ -198,3 +198,40 @@ class BumpAction(ActionWithDirection):
 
         else:
             return MovementAction(self.entity, self.dx, self.dy).perform()
+
+
+class RangedAction(Action):
+    def __init__(self, entity: Actor, target_xy: Tuple[int, int]):
+        """
+        A ranged attack action.
+        :param entity: The actor performing the action.
+        :param target_xy: The target's coordinates (x, y).
+        """
+        super().__init__(entity)
+        self.target_xy = target_xy
+
+    def perform(self) -> None:
+        from components.equippable import Weapon
+
+        target_x, target_y = self.target_xy
+
+        target = self.engine.game_map.get_actor_at_location(target_x, target_y)
+        if not target:
+            raise exceptions.Impossible("No target at the specified location.")
+
+        # if not self.engine.game_map.has_line_of_sight(self.entity.x, self.entity.y, target_x, target_y):
+        #     raise exceptions.Impossible("No clear line of sight to the target.")
+
+        # Calculate damage and attack.
+        if isinstance(self.entity.equipment.weapon.equippable, Weapon):
+            # damage = self.entity.equipment.weapon.equippable.range_damage
+            damage = self.entity.fighter.power - target.fighter.defense
+            damage_type = self.entity.equipment.weapon.equippable.damage_type
+
+            if damage_type:
+                attack_desc = f"{self.entity.name.capitalize()} fires at {target.name}"
+                target.fighter.take_damage(damage, damage_type, attack_desc)
+            else:
+                raise exceptions.Impossible("Weapon cannot be used for ranged attacks.")
+        else:
+            raise exceptions.Impossible("No equipped ranged weapon to perform this action.")

@@ -15,7 +15,7 @@ import exceptions
 
 if TYPE_CHECKING:
     from engine import Engine
-    from entity import Item
+    from entity import Item, Actor
 
 MOVE_KEYS = {
     # Arrow keys.
@@ -537,46 +537,64 @@ class SingleAutoRangedAttackHandler(AskUserEventHandler):
         """Sets the cursor to the player when this handler is constructed."""
         super().__init__(engine)
         self.player = engine.player
-        self.in_range_actors: List = []
-        self.index = 0
-        self.selected_actor = None
+        self.in_range_actors = self.get_actors_in_range()
+        self.current_actor_index = 0
 
-    def collect_actors(self, maximum_range: int):
-        closest_distance = maximum_range + 1.0
-        for actor in self.engine.game_map.actors:
-            if actor is not self.player and actor.parent.visible[actor.x, actor.y]:
-                distance = self.player.distance(actor.x, actor.y)
+        if not self.in_range_actors:
+            # No actors in range, return to the main handler
+            self.engine.message_log.add_message("No targets in range.", colors.impossible)
 
-                if distance < closest_distance:
-                    self.in_range_actors.append(actor)
+    def get_actors_in_range(self) -> List[Actor]:
+        """Return a list of actors in range of the player"""
+        player = self.engine.player
 
-        if len(self.in_range_actors):
-            self.selected_actor = self.in_range_actors[0]
+        actors_in_range = [
+            actor
+            for actor in self.engine.game_map.actors
+            if actor != player
+            and actor.distance(player.x, player.y) <= player.fighter.ranged_attack_range
+        ]
 
-        print(self.in_range_actors)
-
-    def ev_keydown(self, event: tcod.event.KeyDown) -> Optional[ActionOrHandler]:
-        action: Optional[Action] = None
-        self.collect_actors(10)
-        if event.sym == event.sym.r:
-            print("here")
-            if self.in_range_actors:
-                self.index += 1
-                if self.index != len(self.in_range_actors) - 1:
-                    self.selected_actor = self.in_range_actors[self.index]
-                    print(self.selected_actor)
-        elif event.sym == event.sym.ESCAPE:
-            return self.on_exit()
-        return action
+        return actors_in_range
 
     def on_render(self, console: tcod.Console) -> None:
         super().on_render(console)
-        if self.selected_actor:
-            x = self.selected_actor.x
-            y = self.selected_actor.y
 
-            console.rgb['bg'][x, y] = colors.white
-            console.rgb['fg'][x, y] = colors.black
+        if self.in_range_actors:
+            current_actor = self.in_range_actors[self.current_actor_index]
+            console.rgb["bg"][current_actor.x, current_actor.y] = colors.white
+            console.rgb["fg"][current_actor.x, current_actor.y] = colors.black
+
+    def ev_keydown(self, event: tcod.event.KeyDown) -> Optional[ActionOrHandler]:
+        key = event.sym
+
+        if key == tcod.event.KeySym.r:
+            # Cycle to the next actor in range
+            if self.in_range_actors:
+                self.current_actor_index = (self.current_actor_index + 1) % len(self.in_range_actors)
+                self.engine.message_log.add_message(
+                    f"Targeting: {self.in_range_actors[self.current_actor_index].name}",
+                    colors.needs_target
+                )
+            else:
+                # No actors in range, return to the main handler
+                self.engine.message_log.add_message("No targets in range.", colors.impossible)
+                return MainGameEnventHandler(self.engine)
+
+        elif key in CONFIRM_KEYS:
+            # Confirm target and attack
+            if self.in_range_actors:
+                target = self.in_range_actors[self.current_actor_index]
+                return actions.RangedAction(self.engine.player, (target.x, target.y))
+            else:
+                self.engine.message_log.add_message("No valid target to attack.", colors.impossible)
+                return MainGameEnventHandler(self.engine)
+
+        elif key == tcod.event.KeySym.ESCAPE:
+            # Return to the main handler
+            return MainGameEnventHandler(self.engine)
+
+        return None
 
 
 class AreaRangedAttackHandler(SelectIndexHandler):
