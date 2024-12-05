@@ -6,3 +6,4 @@ class EquipmentType(Enum):
     RANGED = auto()
     ARMOR = auto()
     UTILITY = auto()
+    AMMO = auto()

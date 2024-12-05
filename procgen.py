@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 
 
 max_items_by_floor = [
-    (1, 5),
+    (1, 3),  # test value
     (4, 2)
 ]
 
@@ -31,7 +31,8 @@ item_chances: Dict[int, List[Tuple[Entity, int]]] = {
         (entity_factories.fireball_scroll, 5),
         (entity_factories.sword, 5),
         (entity_factories.chain_mail, 5),
-        (entity_factories.arrow, 60)
+        (entity_factories.arrow, 40),
+        (entity_factories.rock, 50)
     ],
     2: [
         (entity_factories.confusion_scroll, 10)

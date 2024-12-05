@@ -5,6 +5,8 @@ from enums.equipments_types import EquipmentType
 from enums.weapon_types import WeaponType
 from enums.weapon_distances import WeaponDistanceType
 from enums.damage_types import DamageType
+from enums.ammo_types import AmmoType
+import random
 
 if TYPE_CHECKING:
     from entity import Item
@@ -85,7 +87,8 @@ class UnarmedRanged(Weapon):
 
 class Bow(Weapon):
     def __init__(
-            self
+            self,
+            ammo_type: AmmoType.ARROW
     ) -> None:
         super().__init__(
             weapon_range=WeaponDistanceType.RANGED,
@@ -93,6 +96,7 @@ class Bow(Weapon):
             damage_type=DamageType.BLUDGEONING,
             range_bonus=2
         )
+        self.ammo_type = ammo_type
 
 
 class Dagger(Weapon):
@@ -140,3 +144,33 @@ class ChainMail(Equippable):
 class Lantern(Equippable):
     def __init__(self) -> None:
         super().__init__(equipment_type=EquipmentType.UTILITY, fov_bonus=5)
+
+
+class Ammo(Equippable):
+    def __init__(
+            self,
+            damage_type: DamageType,
+            ammo_type: AmmoType,
+    ):
+        super().__init__(equipment_type=EquipmentType.AMMO, range_bonus=1)
+        self.quantity = self.random_quantity()
+        self.damage_type = damage_type
+        self.ammo_type = ammo_type
+
+    def use(self) -> None:
+        import components.inventory
+        """Reduce the quantity of the ammo by 1. Removes the item if quantity is 0."""
+        if self.quantity > 0:
+            self.quantity -= 1
+            if self.quantity == 0:
+                """Remove the consumed item from its containing inventory."""
+                entity = self.parent
+                inventory = entity.parent
+                player = inventory.parent
+                player.equipment.toggle_equip(entity, add_message=False)
+
+                if isinstance(inventory, components.inventory.Inventory):
+                    inventory.items.remove(entity)
+
+    def random_quantity(self) -> int:
+        return random.randint(0, 20)

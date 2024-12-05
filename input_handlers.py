@@ -12,12 +12,11 @@ from actions import (
 )
 import colors
 import exceptions
-from components.ammo import Ammo
+from components.equippable import Ammo
 
 if TYPE_CHECKING:
     from engine import Engine
     from entity import Item, Actor
-    from components.ammo import Ammo
 
 MOVE_KEYS = {
     # Arrow keys.
@@ -402,9 +401,9 @@ class InventoryEventHandler(AskUserEventHandler):
                 is_equipped = self.engine.player.equipment.item_is_equipped(item)
                 item_string = f"({item_key}) {item.name}"
 
-                if isinstance(item.ammo, Ammo):
-                    if item.ammo.quantity > 0:
-                        item_string += f" x{item.ammo.quantity}"
+                if isinstance(item.equippable, Ammo):
+                    if item.equippable.quantity > 0:
+                        item_string += f" x{item.equippable.quantity}"
 
                 if is_equipped:
                     item_string += " (E)"

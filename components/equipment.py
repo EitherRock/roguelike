@@ -17,12 +17,14 @@ class Equipment(BaseComponent):
             melee_weapon: Optional[Item] = None,
             ranged_weapon: Optional[Item] = None,
             armor: Optional[Item] = None,
-            utility: Optional[Item] = None
+            utility: Optional[Item] = None,
+            ammo: Optional[Item] = None
     ):
         self.weapon = melee_weapon
         self.ranged_weapon = ranged_weapon
         self.armor = armor
         self.utility = utility
+        self.ammo = ammo
 
     @property
     def damage_type(self) -> Optional[DamageType]:
@@ -68,6 +70,8 @@ class Equipment(BaseComponent):
             bonus += self.ranged_weapon.equippable.range_bonus
         if self.weapon is not None and self.weapon.equippable is not None:
             bonus += self.weapon.equippable.range_bonus
+        if self.ammo is not None and self.ammo.equippable is not None:
+            bonus += self.ammo.equippable.range_bonus
         if self.armor is not None and self.armor.equippable is not None:
             bonus += self.armor.equippable.range_bonus
         if self.utility is not None and self.utility.equippable is not None:
@@ -88,7 +92,8 @@ class Equipment(BaseComponent):
         return self.weapon == item \
             or self.armor == item \
             or self.utility == item \
-            or self.ranged_weapon == item
+            or self.ranged_weapon == item \
+            or self.ammo == item
 
     def unequip_message(self, item_name: str) -> None:
         self.parent.gamemap.engine.message_log.add_message(
@@ -136,6 +141,11 @@ class Equipment(BaseComponent):
             and equippable_item.equippable.equipment_type == EquipmentType.UTILITY
         ):
             slot = "utility"
+        elif (
+                equippable_item.equippable
+                and equippable_item.equippable.equipment_type == EquipmentType.AMMO
+        ):
+            slot = "ammo"
         else:
             slot = "armor"
 

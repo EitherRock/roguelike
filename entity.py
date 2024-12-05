@@ -174,7 +174,6 @@ class Item(Entity):
             name: str = "<Unnamed>",
             consumable: Optional[Consumable] = None,
             equippable: Optional[Equippable] = None,
-            ammo: Optional[Ammo] = None
     ):
         super().__init__(
             x=x,
@@ -195,10 +194,6 @@ class Item(Entity):
 
         if self.equippable:
             self.equippable.parent = self
-
-        self.ammo = ammo
-        if self.ammo:
-            self.ammo.parent = self
 
     def __str__(self):
         return f"Name: {self.name}, equippable: {self.equippable}"

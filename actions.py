@@ -38,7 +38,7 @@ class PickupAction(Action):
         super().__init__(entity)
 
     def perform(self) -> None:
-        from components.ammo import Ammo
+        from components.equippable import Ammo
         actor_location_x = self.entity.x
         actor_location_y = self.entity.y
         inventory = self.entity.inventory
@@ -52,10 +52,11 @@ class PickupAction(Action):
                 item.parent = self.entity.inventory
 
                 for inv_item in item.parent.items:
-                    if inv_item.name == item.name and inv_item.ammo:
-                        inv_item.ammo.quantity += 1
-                        self.engine.message_log.add_message(f"You picked up another {item.name}!")
-                        return
+                    if inv_item.name == item.name and inv_item.equippable:
+                        if isinstance(inv_item.equippable, Ammo):
+                            inv_item.equippable.quantity += 1
+                            self.engine.message_log.add_message(f"You picked up another {item.name}!")
+                            return
 
                 inventory.items.append(item)
 
@@ -223,8 +224,7 @@ class RangedAction(Action):
         self.target_xy = target_xy
 
     def perform(self) -> None:
-        from components.equippable import Weapon
-        from enums.damage_types import DamageType
+        from components.equippable import Ammo, Bow
 
         target_x, target_y = self.target_xy
 
@@ -232,20 +232,40 @@ class RangedAction(Action):
         if not target:
             raise exceptions.Impossible("No target at the specified location.")
 
-        # Calculate damage and attack.
-        if self.entity.equipment.ranged_weapon and isinstance(self.entity.equipment.ranged_weapon.equippable, Weapon):
-            damage = self.entity.fighter.range_power - target.fighter.defense
-            damage_type = self.entity.equipment.ranged_weapon.equippable.damage_type
+        equipment = self.entity.equipment
+        weapon_ammo_type = None
+        if equipment.ranged_weapon and isinstance(equipment.ranged_weapon.equippable, Bow):
 
-            if damage_type:
-                attack_desc = f"{self.entity.name.capitalize()} fires an arrow at {target.name}"
-                target.fighter.take_damage(damage, damage_type, attack_desc)
+            weapon_ammo_type = equipment.ranged_weapon.equippable.ammo_type
+            print(f"ranged ammo type {weapon_ammo_type}")
+
+        """
+        Check if ammo is equipped, if ranged weapon is equipped then check if ammo type matches weapon type, else rock
+        """
+        if equipment.ammo and isinstance(equipment.ammo.equippable, Ammo):
+            ammo_type = equipment.ammo.equippable.ammo_type
+
+            if weapon_ammo_type:
+                if ammo_type == weapon_ammo_type:
+                    damage = self.entity.fighter.range_power - target.fighter.defense
+                    damage_type = equipment.ammo.equippable.damage_type
+                    attack_desc = f"{self.entity.name.capitalize()} fires an arrow at {target.name}"
+                    equipment.ammo.equippable.use()
+                    target.fighter.take_damage(damage, damage_type, attack_desc)
+                else:
+                    raise exceptions.Impossible(
+                        f"{equipment.ranged_weapon.name} cannot use {ammo_type.name.lower().capitalize()} as ammo."
+                    )
+
             else:
-                raise exceptions.Impossible("Weapon cannot be used for ranged attacks.")
-        else:
-            damage = self.entity.fighter.range_power - target.fighter.defense
-            damage_type = DamageType.BLUDGEONING
+                damage = self.entity.fighter.range_power - target.fighter.defense
+                damage_type = equipment.ammo.equippable.damage_type
 
-            if damage_type:
-                attack_desc = f"{self.entity.name.capitalize()} throws a rock at {target.name}"
-                target.fighter.take_damage(damage, damage_type, attack_desc)
+                if damage_type:
+                    attack_desc = f"{self.entity.name.capitalize()} throws a rock at {target.name}"
+                    target.fighter.take_damage(damage, damage_type, attack_desc)
+        else:
+            if weapon_ammo_type:
+                raise exceptions.Impossible(f"No {weapon_ammo_type.name}s equipped.")
+            else:
+                raise exceptions.Impossible("Nothing to throw.")
