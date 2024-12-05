@@ -1,5 +1,5 @@
 from components.ai import HostileEnemy
-from components import consumable, equippable
+from components import consumable, equippable, ammo
 from components.equipment import Equipment
 from components.fighter import Fighter
 from components.inventory import Inventory
@@ -105,6 +105,12 @@ lightning_scroll = Item(
     name="Lightning Scroll",
     consumable=consumable.LightningDamageConsumable(damage=20, maximum_range=5)
 )
+arrow = Item(
+    char="l",
+    color=(0, 255, 255),
+    name="Arrow(s)",
+    ammo=ammo.Ammo(quantity=1, damage_type=DamageType.PIERCING, damage_modifier=1)
+)
 
 dagger = Item(char="/", color=(0, 191, 255), name="Dagger", equippable=equippable.Dagger())
 
@@ -113,6 +119,8 @@ sword = Item(char="/", color=(0, 191, 255), name="Sword", equippable=equippable.
 club = Item(char="/", color=(0, 191, 255), name="Club", equippable=equippable.Club())
 
 unarmed = Item(char="/", color=(0, 191, 255), name="Unarmed", equippable=equippable.Unarmed())
+
+bow = Item(char="/", color=(0, 191, 255), name="Bow", equippable=equippable.Bow())
 
 leather_armor = Item(
     char="[",
@@ -133,5 +141,6 @@ weapon_factory = {
     WeaponType.DAGGER: dagger,
     WeaponType.UNARMED: unarmed,
     WeaponType.SWORD: sword,
-    WeaponType.CLUB: club
+    WeaponType.CLUB: club,
+    WeaponType.BOW: bow,
 }

@@ -12,10 +12,12 @@ from actions import (
 )
 import colors
 import exceptions
+from components.ammo import Ammo
 
 if TYPE_CHECKING:
     from engine import Engine
     from entity import Item, Actor
+    from components.ammo import Ammo
 
 MOVE_KEYS = {
     # Arrow keys.
@@ -252,7 +254,7 @@ class CharacterScreenEventHandler(AskUserEventHandler):
             x=x,
             y=y,
             width=width,
-            height=7,
+            height=10,
             title=self.TITLE,
             clear=True,
             fg=(255, 255, 255),
@@ -272,10 +274,13 @@ class CharacterScreenEventHandler(AskUserEventHandler):
         )
 
         console.print(
-            x=x + 1, y=y + 4, string=f"Attack: {self.engine.player.fighter.power}"
+            x=x + 1, y=y + 5, string=f"Melee Dmg: {self.engine.player.fighter.melee_power}"
         )
         console.print(
-            x=x + 1, y=y + 5, string=f"Defense: {self.engine.player.fighter.defense}"
+            x=x + 1, y=y + 6, string=f"Ranged Dmg: {self.engine.player.fighter.range_power}"
+        )
+        console.print(
+            x=x + 1, y=y + 7, string=f"Defense: {self.engine.player.fighter.defense}"
         )
 
 
@@ -312,7 +317,7 @@ class LevelUpEventHandler(AskUserEventHandler):
         console.print(
             x=x + 1,
             y=5,
-            string=f"b) Strength (+1 attack, from {self.engine.player.fighter.power})",
+            string=f"b) Strength (+1 attack, from {self.engine.player.fighter.melee_power})",
         )
         console.print(
             x=x + 1,
@@ -395,11 +400,14 @@ class InventoryEventHandler(AskUserEventHandler):
                 item_key = chr(ord("a") + i)
 
                 is_equipped = self.engine.player.equipment.item_is_equipped(item)
-
                 item_string = f"({item_key}) {item.name}"
 
+                if isinstance(item.ammo, Ammo):
+                    if item.ammo.quantity > 0:
+                        item_string += f" x{item.ammo.quantity}"
+
                 if is_equipped:
-                    item_string = f"{item_string} (E)"
+                    item_string += " (E)"
                 console.print(x + 1, y + i + 1, item_string)
         else:
             console.print(x + 1, y + 1, "(Empty)")
@@ -543,6 +551,12 @@ class SingleAutoRangedAttackHandler(AskUserEventHandler):
         if not self.in_range_actors:
             # No actors in range, return to the main handler
             self.engine.message_log.add_message("No targets in range.", colors.impossible)
+        else:
+            # Show the initial targeting message
+            self.engine.message_log.add_message(
+                f"Targeting: {self.in_range_actors[self.current_actor_index].name}",
+                colors.needs_target
+            )
 
     def get_actors_in_range(self) -> List[Actor]:
         """Return a list of actors in range of the player"""
@@ -592,6 +606,9 @@ class SingleAutoRangedAttackHandler(AskUserEventHandler):
 
         elif key == tcod.event.KeySym.ESCAPE:
             # Return to the main handler
+            return MainGameEnventHandler(self.engine)
+
+        elif key in MOVE_KEYS:
             return MainGameEnventHandler(self.engine)
 
         return None

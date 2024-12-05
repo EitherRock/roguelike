@@ -6,17 +6,17 @@ import time
 from typing import Optional, Tuple, Type, TypeVar, TYPE_CHECKING, Union
 from enums.spawn_types import SpawnType
 
-from render_order import RenderOrder
+from enums.render_order import RenderOrder
 
 if TYPE_CHECKING:
     from components.ai import BaseAI
     from components.consumable import Consumable
+    from components.ammo import Ammo
     from components.equipment import Equipment
     from components.equippable import Equippable
     from components.fighter import Fighter
     from components.inventory import Inventory
     from components.level import Level
-    from enums.weapon_types import WeaponType
     from game_map import GameMap
     from entity_factories import weapon_factory
 
@@ -173,7 +173,8 @@ class Item(Entity):
             color: Tuple[int, int, int] = (255, 255, 255),
             name: str = "<Unnamed>",
             consumable: Optional[Consumable] = None,
-            equippable: Optional[Equippable] = None
+            equippable: Optional[Equippable] = None,
+            ammo: Optional[Ammo] = None
     ):
         super().__init__(
             x=x,
@@ -194,6 +195,10 @@ class Item(Entity):
 
         if self.equippable:
             self.equippable.parent = self
+
+        self.ammo = ammo
+        if self.ammo:
+            self.ammo.parent = self
 
     def __str__(self):
         return f"Name: {self.name}, equippable: {self.equippable}"
