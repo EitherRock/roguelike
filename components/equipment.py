@@ -6,6 +6,7 @@ from enums.damage_types import DamageType
 
 if TYPE_CHECKING:
     from entity import Actor, Item
+    from enums.weapon_distances import WeaponDistanceType
 
 
 class Equipment(BaseComponent):
@@ -13,19 +14,25 @@ class Equipment(BaseComponent):
 
     def __init__(
             self,
-            weapon: Optional[Item] = None,
+            melee_weapon: Optional[Item] = None,
+            ranged_weapon: Optional[Item] = None,
             armor: Optional[Item] = None,
-            utility: Optional[Item] = None
+            utility: Optional[Item] = None,
+            ammo: Optional[Item] = None
     ):
-        self.weapon = weapon
+        self.weapon = melee_weapon
+        self.ranged_weapon = ranged_weapon
         self.armor = armor
         self.utility = utility
+        self.ammo = ammo
 
     @property
     def damage_type(self) -> Optional[DamageType]:
         from components.equippable import Weapon
         if self.weapon and isinstance(self.weapon, Weapon):
             return self.weapon.damage_type
+        elif self.ranged_weapon and isinstance(self.ranged_weapon, Weapon):
+            return self.ranged_weapon.damage_type
 
     @property
     def defence_bonus(self) -> int:
@@ -33,19 +40,59 @@ class Equipment(BaseComponent):
 
         if self.weapon is not None and self.weapon.equippable is not None:
             bonus += self.weapon.equippable.defense_bonus
+        if self.ranged_weapon is not None and self.ranged_weapon.equippable is not None:
+            bonus += self.ranged_weapon.equippable.defense_bonus
         if self.armor is not None and self.armor.equippable is not None:
             bonus += self.armor.equippable.defense_bonus
 
         return bonus
 
     @property
-    def power_bonus(self) -> int:
+    def melee_bonus(self) -> int:
         bonus = 0
 
         if self.weapon is not None and self.weapon.equippable is not None:
-            bonus += self.weapon.equippable.power_bonus
+            bonus += self.weapon.equippable.melee_bonus
+        if self.ranged_weapon is not None and self.ranged_weapon.equippable is not None:
+            bonus += self.ranged_weapon.equippable.melee_bonus
+        if self.utility is not None and self.utility.equippable is not None:
+            bonus += self.utility.equippable.melee_bonus
         if self.armor is not None and self.armor.equippable is not None:
-            bonus += self.armor.equippable.power_bonus
+            bonus += self.armor.equippable.melee_bonus
+
+        return bonus
+
+    @property
+    def range_dmg_bonus(self) -> int:
+        bonus = 0
+
+        if self.ranged_weapon is not None and self.ranged_weapon.equippable is not None:
+            bonus += self.ranged_weapon.equippable.range_dmg_bonus
+        if self.weapon is not None and self.weapon.equippable is not None:
+            bonus += self.weapon.equippable.range_dmg_bonus
+        if self.ammo is not None and self.ammo.equippable is not None:
+            bonus += self.ammo.equippable.range_dmg_bonus
+        if self.armor is not None and self.armor.equippable is not None:
+            bonus += self.armor.equippable.range_dmg_bonus
+        if self.utility is not None and self.utility.equippable is not None:
+            bonus += self.utility.equippable.range_dmg_bonus
+
+        return bonus
+
+    @property
+    def range_dist_bonus(self) -> int:
+        bonus = 0
+
+        if self.ranged_weapon is not None and self.ranged_weapon.equippable is not None:
+            bonus += self.ranged_weapon.equippable.range_dist_bonus
+        if self.weapon is not None and self.weapon.equippable is not None:
+            bonus += self.weapon.equippable.range_dist_bonus
+        if self.ammo is not None and self.ammo.equippable is not None:
+            bonus += self.ammo.equippable.range_dist_bonus
+        if self.armor is not None and self.armor.equippable is not None:
+            bonus += self.armor.equippable.range_dist_bonus
+        if self.utility is not None and self.utility.equippable is not None:
+            bonus += self.utility.equippable.range_dist_bonus
 
         return bonus
 
@@ -59,7 +106,11 @@ class Equipment(BaseComponent):
         return bonus
 
     def item_is_equipped(self, item: Item) -> bool:
-        return self.weapon == item or self.armor == item or self.utility == item
+        return self.weapon == item \
+            or self.armor == item \
+            or self.utility == item \
+            or self.ranged_weapon == item \
+            or self.ammo == item
 
     def unequip_message(self, item_name: str) -> None:
         self.parent.gamemap.engine.message_log.add_message(
@@ -91,17 +142,27 @@ class Equipment(BaseComponent):
         setattr(self, slot, None)
 
     def toggle_equip(self, equippable_item: Item, add_message: bool = True) -> None:
-
+        from components.equippable import Weapon
+        from enums.weapon_distances import WeaponDistanceType
         if (
             equippable_item.equippable
             and equippable_item.equippable.equipment_type == EquipmentType.WEAPON
         ):
-            slot = "weapon"
+            if isinstance(equippable_item.equippable, Weapon):
+                if equippable_item.equippable.weapon_range == WeaponDistanceType.MELEE:
+                    slot = "weapon"
+                elif equippable_item.equippable.weapon_range == WeaponDistanceType.RANGED:
+                    slot = "ranged_weapon"
         elif (
             equippable_item.equippable
             and equippable_item.equippable.equipment_type == EquipmentType.UTILITY
         ):
             slot = "utility"
+        elif (
+                equippable_item.equippable
+                and equippable_item.equippable.equipment_type == EquipmentType.AMMO
+        ):
+            slot = "ammo"
         else:
             slot = "armor"
 

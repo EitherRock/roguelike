@@ -4,7 +4,7 @@ import colors
 from components.base_component import BaseComponent
 from enums.damage_types import DamageType
 from enums.weapon_types import WeaponType
-from render_order import RenderOrder
+from enums.render_order import RenderOrder
 
 if TYPE_CHECKING:
     from entity import Actor
@@ -18,6 +18,7 @@ class Fighter(BaseComponent):
             hp: int,
             base_defense: int,
             base_power: int,
+            base_attack_range: int = 3,
             resistances: Optional[List[DamageType]] = None,
             immunities: Optional[List[DamageType]] = None,
             allowed_weapon_types: Optional[List[WeaponType]] = None,
@@ -28,6 +29,7 @@ class Fighter(BaseComponent):
         self.base_defense = base_defense
         self.base_power = base_power
         self.base_fov = field_of_view
+        self.base_attack_range = base_attack_range
         self.resistances = resistances or []
         self.immunities = immunities or []
         self._allowed_weapon_types = allowed_weapon_types or []
@@ -54,12 +56,20 @@ class Fighter(BaseComponent):
         return self.base_defense + self.defense_bonus
 
     @property
-    def power(self) -> int:
-        return self.base_power + self.power_bonus
+    def melee_power(self) -> int:
+        return self.base_power + self.melee_bonus
+
+    @property
+    def range_power(self) -> int:
+        return self.base_power + self.range_dmg_bonus
 
     @property
     def fov(self) -> int:
         return self.base_fov + self.fov_bonus
+
+    @property
+    def ranged_attack_range(self) -> int:
+        return self.base_attack_range + self.rang_dist_bonus
 
     @property
     def defense_bonus(self) -> int:
@@ -69,9 +79,23 @@ class Fighter(BaseComponent):
         return bonus
 
     @property
-    def power_bonus(self) -> int:
+    def melee_bonus(self) -> int:
         if self.parent.equipment:
-            return self.parent.equipment.power_bonus
+            return self.parent.equipment.melee_bonus
+        else:
+            return 0
+
+    @property
+    def range_dmg_bonus(self) -> int:
+        if self.parent.equipment:
+            return self.parent.equipment.range_dmg_bonus
+        else:
+            return 0
+
+    @property
+    def rang_dist_bonus(self) -> int:
+        if self.parent.equipment:
+            return self.parent.equipment.range_dist_bonus
         else:
             return 0
 

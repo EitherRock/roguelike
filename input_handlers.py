@@ -1,6 +1,6 @@
 from __future__ import annotations
 import os
-from typing import Callable, Optional, Tuple, TYPE_CHECKING, Union
+from typing import Callable, Optional, Tuple, TYPE_CHECKING, Union, List
 import tcod.event
 from tcod import libtcodpy
 import actions
@@ -12,10 +12,11 @@ from actions import (
 )
 import colors
 import exceptions
+from components.equippable import Ammo
 
 if TYPE_CHECKING:
     from engine import Engine
-    from entity import Item
+    from entity import Item, Actor
 
 MOVE_KEYS = {
     # Arrow keys.
@@ -196,6 +197,8 @@ class MainGameEnventHandler(EventHandler):
             return CharacterScreenEventHandler(self.engine)
         elif key == tcod.event.KeySym.SLASH:
             return LookHandler(self.engine)
+        elif key == tcod.event.KeySym.r:
+            return SingleAutoRangedAttackHandler(self.engine)
 
         # No valid key was pressed
         return action
@@ -250,7 +253,7 @@ class CharacterScreenEventHandler(AskUserEventHandler):
             x=x,
             y=y,
             width=width,
-            height=7,
+            height=10,
             title=self.TITLE,
             clear=True,
             fg=(255, 255, 255),
@@ -270,10 +273,13 @@ class CharacterScreenEventHandler(AskUserEventHandler):
         )
 
         console.print(
-            x=x + 1, y=y + 4, string=f"Attack: {self.engine.player.fighter.power}"
+            x=x + 1, y=y + 5, string=f"Melee Dmg: {self.engine.player.fighter.melee_power}"
         )
         console.print(
-            x=x + 1, y=y + 5, string=f"Defense: {self.engine.player.fighter.defense}"
+            x=x + 1, y=y + 6, string=f"Ranged Dmg: {self.engine.player.fighter.range_power}"
+        )
+        console.print(
+            x=x + 1, y=y + 7, string=f"Defense: {self.engine.player.fighter.defense}"
         )
 
 
@@ -310,7 +316,7 @@ class LevelUpEventHandler(AskUserEventHandler):
         console.print(
             x=x + 1,
             y=5,
-            string=f"b) Strength (+1 attack, from {self.engine.player.fighter.power})",
+            string=f"b) Strength (+1 attack, from {self.engine.player.fighter.melee_power})",
         )
         console.print(
             x=x + 1,
@@ -393,11 +399,14 @@ class InventoryEventHandler(AskUserEventHandler):
                 item_key = chr(ord("a") + i)
 
                 is_equipped = self.engine.player.equipment.item_is_equipped(item)
-
                 item_string = f"({item_key}) {item.name}"
 
+                if isinstance(item.equippable, Ammo):
+                    if item.equippable.quantity > 0:
+                        item_string += f" x{item.equippable.quantity}"
+
                 if is_equipped:
-                    item_string = f"{item_string} (E)"
+                    item_string += " (E)"
                 console.print(x + 1, y + i + 1, item_string)
         else:
             console.print(x + 1, y + 1, "(Empty)")
@@ -528,6 +537,82 @@ class SingleRangedAttackHandler(SelectIndexHandler):
         return self.callback((x, y))
 
 
+class SingleAutoRangedAttackHandler(AskUserEventHandler):
+    """Handles auto selecting entities for ranged combat"""
+
+    def __init__(self, engine: Engine):
+        """Sets the cursor to the player when this handler is constructed."""
+        super().__init__(engine)
+        self.player = engine.player
+        self.in_range_actors = self.get_actors_in_range()
+        self.current_actor_index = 0
+
+        if not self.in_range_actors:
+            # No actors in range, return to the main handler
+            self.engine.message_log.add_message("No targets in range.", colors.impossible)
+        else:
+            # Show the initial targeting message
+            self.engine.message_log.add_message(
+                f"Targeting: {self.in_range_actors[self.current_actor_index].name}",
+                colors.needs_target
+            )
+
+    def get_actors_in_range(self) -> List[Actor]:
+        """Return a list of actors in range of the player"""
+        player = self.engine.player
+
+        actors_in_range = [
+            actor
+            for actor in self.engine.game_map.actors
+            if actor != player
+            and actor.distance(player.x, player.y) <= player.fighter.ranged_attack_range
+        ]
+
+        return actors_in_range
+
+    def on_render(self, console: tcod.Console) -> None:
+        super().on_render(console)
+
+        if self.in_range_actors:
+            current_actor = self.in_range_actors[self.current_actor_index]
+            console.rgb["bg"][current_actor.x, current_actor.y] = colors.white
+            console.rgb["fg"][current_actor.x, current_actor.y] = colors.black
+
+    def ev_keydown(self, event: tcod.event.KeyDown) -> Optional[ActionOrHandler]:
+        key = event.sym
+
+        if key == tcod.event.KeySym.r:
+            # Cycle to the next actor in range
+            if self.in_range_actors:
+                self.current_actor_index = (self.current_actor_index + 1) % len(self.in_range_actors)
+                self.engine.message_log.add_message(
+                    f"Targeting: {self.in_range_actors[self.current_actor_index].name}",
+                    colors.needs_target
+                )
+            else:
+                # No actors in range, return to the main handler
+                self.engine.message_log.add_message("No targets in range.", colors.impossible)
+                return MainGameEnventHandler(self.engine)
+
+        elif key in CONFIRM_KEYS:
+            # Confirm target and attack
+            if self.in_range_actors:
+                target = self.in_range_actors[self.current_actor_index]
+                return actions.RangedAction(self.engine.player, (target.x, target.y))
+            else:
+                self.engine.message_log.add_message("No valid target to attack.", colors.impossible)
+                return MainGameEnventHandler(self.engine)
+
+        elif key == tcod.event.KeySym.ESCAPE:
+            # Return to the main handler
+            return MainGameEnventHandler(self.engine)
+
+        elif key in MOVE_KEYS:
+            return MainGameEnventHandler(self.engine)
+
+        return None
+
+
 class AreaRangedAttackHandler(SelectIndexHandler):
     """Handles targeting an area within a given radius. Any entity within the area will be affected."""
 
@@ -557,35 +642,6 @@ class AreaRangedAttackHandler(SelectIndexHandler):
             fg=colors.red,
             clear=False
         )
-
-    # def on_render(self, console: tcod.console.Console) -> None:
-    #     """Highlight a cross with pyramid-like sides centered on the cursor."""
-    #     super().on_render(console)
-    #
-    #     x, y = self.engine.mouse_location
-    #
-    #     for i in range(self.radius + 1):
-    #         width = self.radius - i  # Width of the current layer
-    #
-    #         # Horizontal lines: only draw the endpoints (leftmost and rightmost)
-    #         if self.engine.game_map.in_bounds(x - width, y + i):
-    #             console.bg[y + i, x - width] = colors.red  # Bottom-left
-    #         if self.engine.game_map.in_bounds(x + width, y + i):
-    #             console.bg[y + i, x + width] = colors.red  # Bottom-right
-    #         if self.engine.game_map.in_bounds(x - width, y - i):
-    #             console.bg[y - i, x - width] = colors.red  # Top-left
-    #         if self.engine.game_map.in_bounds(x + width, y - i):
-    #             console.bg[y - i, x + width] = colors.red  # Top-right
-    #
-    #         # Vertical lines: only draw the endpoints (topmost and bottommost)
-    #         if self.engine.game_map.in_bounds(x + i, y - width):
-    #             console.bg[y - width, x + i] = colors.red  # Right-top
-    #         if self.engine.game_map.in_bounds(x + i, y + width):
-    #             console.bg[y + width, x + i] = colors.red  # Right-bottom
-    #         if self.engine.game_map.in_bounds(x - i, y - width):
-    #             console.bg[y - width, x - i] = colors.red  # Left-top
-    #         if self.engine.game_map.in_bounds(x - i, y + width):
-    #             console.bg[y + width, x - i] = colors.red  # Left-bottom
 
     def on_index_selected(self, x: int, y: int) -> Optional[Action]:
         return self.callback((x, y))

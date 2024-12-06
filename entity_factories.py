@@ -8,6 +8,7 @@ from components.level import Level
 from entity import Actor, Item
 from enums.weapon_types import WeaponType
 from enums.damage_types import DamageType
+from enums.ammo_types import AmmoType
 
 
 player = Actor(
@@ -28,7 +29,12 @@ rat = Actor(
     name="Rat",
     ai_cls=HostileEnemy,
     equipment=Equipment(),
-    fighter=Fighter(hp=5, base_defense=0, base_power=3, field_of_view=0, immunities=[DamageType.SLASHING, DamageType.LIGHTNING]),
+    fighter=Fighter(
+        hp=5,
+        base_defense=0,
+        base_power=3,
+        field_of_view=0,
+        immunities=[DamageType.SLASHING, DamageType.LIGHTNING]),
     inventory=Inventory(capacity=1),
     level=Level(xp_given=15),
     move_cooldown=.2,
@@ -105,6 +111,25 @@ lightning_scroll = Item(
     name="Lightning Scroll",
     consumable=consumable.LightningDamageConsumable(damage=20, maximum_range=5)
 )
+arrow = Item(
+    char="|",
+    color=(106, 13, 173),
+    name="Arrow(s)",
+    equippable=equippable.Ammo(
+        ammo_type=AmmoType.ARROW,
+        damage_type=DamageType.PIERCING
+    )
+)
+
+rock = Item(
+    char="|",
+    color=(100, 100, 100),
+    name="Rock(s)",
+    equippable=equippable.Ammo(
+        ammo_type=AmmoType.ROCK,
+        damage_type=DamageType.BLUDGEONING
+    )
+)
 
 dagger = Item(char="/", color=(0, 191, 255), name="Dagger", equippable=equippable.Dagger())
 
@@ -113,6 +138,20 @@ sword = Item(char="/", color=(0, 191, 255), name="Sword", equippable=equippable.
 club = Item(char="/", color=(0, 191, 255), name="Club", equippable=equippable.Club())
 
 unarmed = Item(char="/", color=(0, 191, 255), name="Unarmed", equippable=equippable.Unarmed())
+
+bow = Item(
+    char="/",
+    color=(0, 191, 255),
+    name="Bow",
+    equippable=equippable.Bow(ammo_type=AmmoType.ARROW, range_dmg_bonus=2, range_dist_bonus=2)
+)
+
+long_bow = Item(
+    char="/",
+    color=(80, 191, 255),
+    name="Long Bow",
+    equippable=equippable.Bow(ammo_type=AmmoType.ARROW, range_dmg_bonus=4, range_dist_bonus=4)
+)
 
 leather_armor = Item(
     char="[",
@@ -133,5 +172,6 @@ weapon_factory = {
     WeaponType.DAGGER: dagger,
     WeaponType.UNARMED: unarmed,
     WeaponType.SWORD: sword,
-    WeaponType.CLUB: club
+    WeaponType.CLUB: club,
+    WeaponType.BOW: bow,
 }
