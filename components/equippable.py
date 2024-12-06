@@ -19,14 +19,16 @@ class Equippable(BaseComponent):
         self,
         equipment_type: EquipmentType,
         melee_bonus: int = 0,
-        range_bonus: int = 0,
+        range_dmg_bonus: int = 0,
+        range_dist_bonus: int = 0,
         defense_bonus: int = 0,
         fov_bonus: int = 0
     ):
         self.equipment_type = equipment_type
 
         self.melee_bonus = melee_bonus
-        self.range_bonus = range_bonus
+        self.range_dmg_bonus = range_dmg_bonus
+        self.range_dist_bonus = range_dist_bonus
         self.defense_bonus = defense_bonus
 
         self.fov_bonus = fov_bonus
@@ -39,7 +41,8 @@ class Weapon(Equippable):
         weapon_type: WeaponType,
         damage_type: Optional[DamageType] = None,
         melee_bonus: int = 0,
-        range_bonus: int = 0,
+        range_dmg_bonus: int = 0,
+        range_dist_bonus: int = 0,
         defense_bonus: int = 0,
         fov_bonus: int = 0,
     ) -> None:
@@ -60,7 +63,8 @@ class Weapon(Equippable):
         self.weapon_range = weapon_range
         self.weapon_type = weapon_type
         self.damage_type = damage_type
-        self.range_bonus = range_bonus
+        self.range_dmg_bonus = range_dmg_bonus
+        self.range_dist_bonus = range_dist_bonus
 
 
 class Unarmed(Weapon):
@@ -88,13 +92,16 @@ class UnarmedRanged(Weapon):
 class Bow(Weapon):
     def __init__(
             self,
-            ammo_type: AmmoType.ARROW
+            ammo_type: AmmoType.ARROW,
+            range_dmg_bonus: int,
+            range_dist_bonus: int
     ) -> None:
         super().__init__(
             weapon_range=WeaponDistanceType.RANGED,
             weapon_type=WeaponType.BOW,
             damage_type=DamageType.BLUDGEONING,
-            range_bonus=2
+            range_dmg_bonus=range_dmg_bonus,
+            range_dist_bonus=range_dist_bonus
         )
         self.ammo_type = ammo_type
 
@@ -152,7 +159,7 @@ class Ammo(Equippable):
             damage_type: DamageType,
             ammo_type: AmmoType,
     ):
-        super().__init__(equipment_type=EquipmentType.AMMO, range_bonus=1)
+        super().__init__(equipment_type=EquipmentType.AMMO, range_dmg_bonus=1)
         self.quantity = self.random_quantity()
         self.damage_type = damage_type
         self.ammo_type = ammo_type

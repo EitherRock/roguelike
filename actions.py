@@ -237,7 +237,6 @@ class RangedAction(Action):
         if equipment.ranged_weapon and isinstance(equipment.ranged_weapon.equippable, Bow):
 
             weapon_ammo_type = equipment.ranged_weapon.equippable.ammo_type
-            print(f"ranged ammo type {weapon_ammo_type}")
 
         """
         Check if ammo is equipped, if ranged weapon is equipped then check if ammo type matches weapon type, else rock
