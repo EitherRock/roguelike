@@ -61,7 +61,7 @@ class Fighter(BaseComponent):
 
     @property
     def range_power(self) -> int:
-        return self.base_power + self.range_bonus
+        return self.base_power + self.range_dmg_bonus
 
     @property
     def fov(self) -> int:
@@ -69,7 +69,7 @@ class Fighter(BaseComponent):
 
     @property
     def ranged_attack_range(self) -> int:
-        return self.base_attack_range
+        return self.base_attack_range + self.rang_dist_bonus
 
     @property
     def defense_bonus(self) -> int:
@@ -86,9 +86,16 @@ class Fighter(BaseComponent):
             return 0
 
     @property
-    def range_bonus(self) -> int:
+    def range_dmg_bonus(self) -> int:
         if self.parent.equipment:
-            return self.parent.equipment.range_bonus
+            return self.parent.equipment.range_dmg_bonus
+        else:
+            return 0
+
+    @property
+    def rang_dist_bonus(self) -> int:
+        if self.parent.equipment:
+            return self.parent.equipment.range_dist_bonus
         else:
             return 0
 

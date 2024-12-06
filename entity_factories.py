@@ -139,7 +139,19 @@ club = Item(char="/", color=(0, 191, 255), name="Club", equippable=equippable.Cl
 
 unarmed = Item(char="/", color=(0, 191, 255), name="Unarmed", equippable=equippable.Unarmed())
 
-bow = Item(char="/", color=(0, 191, 255), name="Bow", equippable=equippable.Bow(ammo_type=AmmoType.ARROW))
+bow = Item(
+    char="/",
+    color=(0, 191, 255),
+    name="Bow",
+    equippable=equippable.Bow(ammo_type=AmmoType.ARROW, range_dmg_bonus=2, range_dist_bonus=2)
+)
+
+long_bow = Item(
+    char="/",
+    color=(80, 191, 255),
+    name="Long Bow",
+    equippable=equippable.Bow(ammo_type=AmmoType.ARROW, range_dmg_bonus=4, range_dist_bonus=4)
+)
 
 leather_armor = Item(
     char="[",

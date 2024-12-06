@@ -63,19 +63,36 @@ class Equipment(BaseComponent):
         return bonus
 
     @property
-    def range_bonus(self) -> int:
+    def range_dmg_bonus(self) -> int:
         bonus = 0
 
         if self.ranged_weapon is not None and self.ranged_weapon.equippable is not None:
-            bonus += self.ranged_weapon.equippable.range_bonus
+            bonus += self.ranged_weapon.equippable.range_dmg_bonus
         if self.weapon is not None and self.weapon.equippable is not None:
-            bonus += self.weapon.equippable.range_bonus
+            bonus += self.weapon.equippable.range_dmg_bonus
         if self.ammo is not None and self.ammo.equippable is not None:
-            bonus += self.ammo.equippable.range_bonus
+            bonus += self.ammo.equippable.range_dmg_bonus
         if self.armor is not None and self.armor.equippable is not None:
-            bonus += self.armor.equippable.range_bonus
+            bonus += self.armor.equippable.range_dmg_bonus
         if self.utility is not None and self.utility.equippable is not None:
-            bonus += self.utility.equippable.range_bonus
+            bonus += self.utility.equippable.range_dmg_bonus
+
+        return bonus
+
+    @property
+    def range_dist_bonus(self) -> int:
+        bonus = 0
+
+        if self.ranged_weapon is not None and self.ranged_weapon.equippable is not None:
+            bonus += self.ranged_weapon.equippable.range_dist_bonus
+        if self.weapon is not None and self.weapon.equippable is not None:
+            bonus += self.weapon.equippable.range_dist_bonus
+        if self.ammo is not None and self.ammo.equippable is not None:
+            bonus += self.ammo.equippable.range_dist_bonus
+        if self.armor is not None and self.armor.equippable is not None:
+            bonus += self.armor.equippable.range_dist_bonus
+        if self.utility is not None and self.utility.equippable is not None:
+            bonus += self.utility.equippable.range_dist_bonus
 
         return bonus
 
