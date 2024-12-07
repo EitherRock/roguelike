@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 
 
 max_items_by_floor = [
-    (1, 3),  # test value
+    (1, 10),  # test value
     (4, 2)
 ]
 

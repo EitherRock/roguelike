@@ -1,6 +1,10 @@
 from __future__ import annotations
 from typing import Tuple, TYPE_CHECKING
 import colors
+from entity import Item
+from components.equippable import Ammo
+from components.consumable import Scroll, Potion
+from util import format_item_name
 
 if TYPE_CHECKING:
     from tcod import Console
@@ -12,11 +16,35 @@ def get_names_at_location(x: int, y: int, game_map: GameMap) -> str:
     if not game_map.in_bounds(x, y) or not game_map.visible[x, y]:
         return ""
 
-    names = ", ".join(
-        entity.name for entity in game_map.entities if entity.x == x and entity.y == y
-    )
+    names = []
+    for entity in game_map.entities:
+        if entity.x == x and entity.y == y:
+            # Check if the entity is ammo and has a quantity attribute
+            if isinstance(entity, Item):
+                if entity.equippable:
+                    if isinstance(entity.equippable, Ammo):
+                        quantity = entity.equippable.quantity
+                        names.append(
+                            f"{format_item_name(entity.name, quantity)} x{quantity}"
+                        )
+                    else:
+                        names.append(entity.name)
 
-    return names.capitalize()
+                elif entity.consumable:
+                    if isinstance(entity.consumable, Potion) or isinstance(entity.consumable, Scroll):
+                        quantity = entity.consumable.quantity
+                        names.append(
+                            f"{format_item_name(entity.name, quantity)} x{quantity}"
+                        )
+                    else:
+                        names.append(entity.name)
+
+                else:
+                    names.append(entity.name)
+            else:
+                names.append(entity.name)
+
+    return ", ".join(names).capitalize()
 
 
 def render_bar(
