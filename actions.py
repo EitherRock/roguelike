@@ -341,6 +341,7 @@ class RangedAction(Action):
 
                 if damage_type:
                     attack_desc = f"{self.entity.name.capitalize()} throws a rock at {target.name}"
+                    equipment.ammo.equippable.use()
                     target.fighter.take_damage(damage, damage_type, attack_desc)
         else:
             if weapon_ammo_type:

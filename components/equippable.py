@@ -180,4 +180,4 @@ class Ammo(Equippable):
                     inventory.items.remove(entity)
 
     def random_quantity(self) -> int:
-        return random.randint(1, 20)
+        return random.randint(1, 10)
