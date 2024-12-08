@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import copy
 from typing import Optional, Tuple, TYPE_CHECKING
+
+import colors
 import exceptions
 from stack_limit import STACK_LIMITS
 from util import format_item_name
@@ -251,6 +253,10 @@ class MeleeAction(ActionWithDirection):
         target = self.target_actor
         if not target:
             raise exceptions.Impossible("Nothing to attack.")
+
+        if target.fighter.flying:
+            self.engine.message_log.add_message(f"Cannot reach flying {target.name}", colors.red)
+            return
 
         damage = self.entity.fighter.melee_power - target.fighter.defense
         if damage <= 0:

@@ -41,6 +41,25 @@ rat = Actor(
     spawn_type=SpawnType.SWARM
 )
 
+bat = Actor(
+    char="b",
+    color=(0, 0, 0),
+    name="Bat",
+    ai_cls=HostileEnemy,
+    equipment=Equipment(),
+    fighter=Fighter(
+        hp=5,
+        base_defense=0,
+        base_power=3,
+        field_of_view=0,
+        flying=True
+    ),
+    inventory=Inventory(capacity=1),
+    level=Level(xp_given=20),
+    move_cooldown=.2,
+    spawn_type=SpawnType.SWARM
+)
+
 goblin = Actor(
     char="g",
     color=(58, 130, 58),
