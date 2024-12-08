@@ -144,7 +144,7 @@ class Equipment(BaseComponent):
         if add_message:
             quantity = 1
             if isinstance(current_item.equippable, Ammo):
-                quantity = current_item.quantity
+                quantity = current_item.equippable.quantity
             self.unequip_message(format_item_name(current_item.name, quantity))
 
         setattr(self, slot, None)

@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Iterable, Dict, Iterator, Optional, TYPE_CHECKING
+from typing import Iterable, Dict, Iterator, Optional, TYPE_CHECKING, List
 import numpy as np  # type: ignore
 from tcod.console import Console
 from entity import Actor, Item
@@ -135,6 +135,7 @@ class DungeonWorld(World):
             map_height=map_height
         )
 
+        self.rooms = None
         self.max_rooms = max_rooms
 
         self.room_min_size = room_min_size
@@ -144,11 +145,12 @@ class DungeonWorld(World):
         self.previous_floors: Dict[int: GameMap] = {}
 
     def generate(self) -> None:
-        from procgen import generate_dungeon
+        from procgen import generate_dungeon, find_and_mark_doors
 
         self.current_floor += 1
+        self.rooms: List = []
 
-        self.engine.game_map = generate_dungeon(
+        self.engine.game_map, self.rooms = generate_dungeon(
             max_rooms=self.max_rooms,
             room_min_size=self.room_min_size,
             room_max_size=self.room_max_size,
@@ -156,6 +158,8 @@ class DungeonWorld(World):
             map_height=self.map_height,
             engine=self.engine,
         )
+
+        find_and_mark_doors(self.engine.game_map, self.rooms)
 
     def descend_dungeon(self) -> None:
         """Move deeper into the DungeonWorld."""

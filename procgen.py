@@ -103,35 +103,6 @@ def get_entities_at_random(
     return chosen_entities
 
 
-class RectangularRoom:
-    def __init__(self, x: int, y: int, width: int, height: int):
-        self.x1 = x
-        self.y1 = y
-        self.x2 = x + width
-        self.y2 = y + height
-
-    @property
-    def center(self) -> Tuple[int, int]:
-        center_x = int((self.x1 + self.x2) / 2)
-        center_y = int((self.y1 + self.y2) / 2)
-
-        return center_x, center_y
-
-    @property
-    def inner(self) -> Tuple[slice, slice]:
-        """Return the inner area of this room as a 2D array index."""
-        return slice(self.x1 + 1, self.x2), slice(self.y1 + 1, self.y2)
-
-    def intersects(self, other: RectangularRoom) -> bool:
-        """Return True if this room overlaps with another RectangularRoom."""
-        return (
-            self.x1 <= other.x2
-            and self.x2 >= other.x1
-            and self.y1 <= other.y2
-            and self.y2 > other.y1
-        )
-
-
 def place_entities(room: RectangularRoom, dungeon: GameMap, floor_number: int,) -> None:
     # How many monsters can spawn in the room?
     number_of_monsters = random.randint(
@@ -245,6 +216,35 @@ def spawn_swarm(
             entity.spawn(dungeon, x, y)
 
 
+class RectangularRoom:
+    def __init__(self, x: int, y: int, width: int, height: int):
+        self.x1 = x
+        self.y1 = y
+        self.x2 = x + width
+        self.y2 = y + height
+
+    @property
+    def center(self) -> Tuple[int, int]:
+        center_x = int((self.x1 + self.x2) / 2)
+        center_y = int((self.y1 + self.y2) / 2)
+
+        return center_x, center_y
+
+    @property
+    def inner(self) -> Tuple[slice, slice]:
+        """Return the inner area of this room as a 2D array index."""
+        return slice(self.x1 + 1, self.x2), slice(self.y1 + 1, self.y2)
+
+    def intersects(self, other: RectangularRoom) -> bool:
+        """Return True if this room overlaps with another RectangularRoom."""
+        return (
+            self.x1 <= other.x2
+            and self.x2 >= other.x1
+            and self.y1 <= other.y2
+            and self.y2 > other.y1
+        )
+
+
 def tunnel_between(
         start: Tuple[int, int], end: Tuple[int, int]
 ) -> Iterator[Tuple[int, int]]:
@@ -272,7 +272,7 @@ def generate_dungeon(
         map_width: int,
         map_height: int,
         engine: Engine,
-) -> GameMap:
+) -> tuple[GameMap, list[RectangularRoom]]:
     """Generate a new dungeon map."""
     player = engine.player
     dungeon = GameMap(engine, map_width, map_height, entities=[player])
@@ -310,6 +310,7 @@ def generate_dungeon(
 
             for x, y in tunnel_between(rooms[-1].center, new_room.center):
                 dungeon.tiles[x, y] = tile_types.floor
+                # dungeon.tiles[x, y] = tile_types.tunnel
 
             center_of_last_room = new_room.center
 
@@ -322,8 +323,79 @@ def generate_dungeon(
         # Finally, append the new room to the list.
         rooms.append(new_room)
 
-    return dungeon
+    # Mark doors after all rooms and tunnels are generated
+    # find_and_mark_doors(dungeon, rooms)
+
+    return dungeon, rooms
 
 
+def find_and_mark_doors(dungeon: GameMap, rooms: List[RectangularRoom]) -> None:
+    """Find and mark door locations where tunnels connect to rooms."""
+    for room in rooms:
+        room_bounds = {
+            (x, y)
+            for x in range(room.x1 + 1, room.x2)
+            for y in range(room.y1 + 1, room.y2)
+        }
+
+        potential_doors = []
+
+        # Check tiles at the room's perimeter
+        for x in range(room.x1, room.x2 + 1):
+            for y in range(room.y1, room.y2 + 1):
+                # Only consider perimeter tiles
+                if x in (room.x1, room.x2) or y in (room.y1, room.y2):
+                    if dungeon.tiles[x, y] == tile_types.floor:
+                        # Floor tile at the edge is a potential door
+                        adjacent_floors = 0
+                        adjacent_walls = 0
+
+                        for dx, dy in ((0, 1), (1, 0), (0, -1), (-1, 0)):
+                            nx, ny = x + dx, y + dy
+                            if not dungeon.in_bounds(nx, ny):
+                                continue
+                            if dungeon.tiles[nx, ny] == tile_types.floor and (nx, ny) not in room_bounds:
+                                adjacent_floors += 1
+                            elif dungeon.tiles[nx, ny] == tile_types.wall:
+                                adjacent_walls += 1
+
+                        # A valid door:
+                        # - Must have exactly 1 adjacent floor outside the room
+                        # - Must have at least 2 adjacent walls
+                        if adjacent_floors == 1 and adjacent_walls >= 2:
+                            potential_doors.append((x, y))
+
+        # Mark door tiles
+        for x, y in potential_doors:
+            dungeon.tiles[x, y] = tile_types.door
 
 
+# def find_and_mark_doors(dungeon: GameMap, rooms: List[RectangularRoom]) -> None:
+#     """Find and mark door locations where tunnels connect to rooms."""
+#     for room in rooms:
+#         room_bounds = {
+#             (x, y)
+#             for x in range(room.x1 + 1, room.x2)
+#             for y in range(room.y1 + 1, room.y2)
+#         }
+#
+#         potential_doors = []
+#
+#         # Check tiles at the room's perimeter
+#         for x in range(room.x1, room.x2 + 1):
+#             for y in range(room.y1, room.y2 + 1):
+#                 # Only consider perimeter tiles
+#                 if x in (room.x1, room.x2) or y in (room.y1, room.y2):
+#                     if dungeon.tiles[x, y] == tile_types.floor:
+#                         # Floor tile at the edge is a potential door
+#                         adjacent_floors = 0
+#                         for dx, dy in ((0, 1), (1, 0), (0, -1), (-1, 0)):
+#                             nx, ny = x + dx, y + dy
+#                             if dungeon.tiles[nx, ny] == tile_types.floor and (nx, ny) not in room_bounds:
+#                                 adjacent_floors += 1
+#                         if adjacent_floors == 1:  # Single connection to a tunnel
+#                             potential_doors.append((x, y))
+#
+#         # Mark door tiles
+#         for x, y in potential_doors:
+#             dungeon.tiles[x, y] = tile_types.door
