@@ -22,7 +22,8 @@ class Fighter(BaseComponent):
             resistances: Optional[List[DamageType]] = None,
             immunities: Optional[List[DamageType]] = None,
             allowed_weapon_types: Optional[List[WeaponType]] = None,
-            field_of_view: Optional[int] = None
+            field_of_view: Optional[int] = None,
+            flying: bool = False
     ):
         self.max_hp = hp
         self._hp = hp
@@ -30,6 +31,7 @@ class Fighter(BaseComponent):
         self.base_power = base_power
         self.base_fov = field_of_view
         self.base_attack_range = base_attack_range
+        self.flying = flying
         self.resistances = resistances or []
         self.immunities = immunities or []
         self._allowed_weapon_types = allowed_weapon_types or []

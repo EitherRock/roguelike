@@ -21,8 +21,9 @@ if TYPE_CHECKING:
 class Consumable(BaseComponent):
     parent: Item
 
-    def __init__(self, consumable_type: ConsumableType):
+    def __init__(self, consumable_type: ConsumableType, quantity: int = 1):
         self.consumable_type = consumable_type
+        self.quantity = quantity
 
     def get_action(self, consumer: Actor) -> Optional[ActionOrHandler]:
         """Try to return the action for this item."""
@@ -37,22 +38,25 @@ class Consumable(BaseComponent):
 
     def consume(self) -> None:
         """Remove the consumed item from its containing inventory."""
-        entity = self.parent
-        inventory = entity.parent
-        if isinstance(inventory, components.inventory.Inventory):
-            inventory.items.remove(entity)
+        if self.quantity > 0:
+            self.quantity -= 1
+            if self.quantity == 0:
+                """Remove the consumed item from its containing inventory."""
+                entity = self.parent
+                inventory = entity.parent
+
+                if isinstance(inventory, components.inventory.Inventory):
+                    inventory.items.remove(entity)
 
 
 class Scroll(Consumable):
     def __init__(self):
         super().__init__(consumable_type=ConsumableType.SCROLL)
-        self.quantity: int = 1
 
 
 class Potion(Consumable):
     def __init__(self):
         super().__init__(consumable_type=ConsumableType.POTION)
-        self.quantity: int = 1
 
 
 class ConfusionConsumable(Scroll):
