@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+import copy
 from typing import Optional, Tuple, TYPE_CHECKING
 import exceptions
+from stack_limit import STACK_LIMITS
+from util import format_item_name
 
 if TYPE_CHECKING:
     from engine import Engine
@@ -39,27 +42,103 @@ class PickupAction(Action):
 
     def perform(self) -> None:
         from components.equippable import Ammo
+        from components.consumable import Scroll, Potion
         actor_location_x = self.entity.x
         actor_location_y = self.entity.y
         inventory = self.entity.inventory
 
         for item in self.engine.game_map.items:
             if actor_location_x == item.x and actor_location_y == item.y:
+
+                # Check if the item has equippable or consumable properties with a quantity
+                has_quantity = False
+                stack_limit = float("inf")
+                existing_quantity = 0
+                new_quantity = 0
+                new_item_type = None
+                existing_item_type = None
+
+                if hasattr(item, "equippable") and item.equippable \
+                        and getattr(item.equippable, "quantity", None) is not None:
+                    has_quantity = True
+                    if isinstance(item.equippable, Ammo):
+                        new_quantity = item.equippable.quantity
+                        new_item_type = item.equippable
+                        stack_limit = STACK_LIMITS[new_item_type.ammo_type.name]
+
+                elif hasattr(item, "consumable") and item.consumable \
+                        and getattr(item.consumable, "quantity", None) is not None:
+                    if isinstance(item.consumable, (Potion, Scroll)):
+                        has_quantity = True
+                        new_quantity = item.consumable.quantity
+                        new_item_type = item.consumable
+                        stack_limit = STACK_LIMITS[new_item_type.consumable_type.name]
+
+                if has_quantity:
+                    for inv_item in inventory.items:
+                        if inv_item.name == item.name:
+                            # Determine stack limit and existing quantities
+                            if isinstance(inv_item.equippable, Ammo):
+                                # stack_limit = STACK_LIMITS[inv_item.equippable.ammo_type.name]
+                                existing_quantity = inv_item.equippable.quantity
+                                existing_item_type = inv_item.equippable
+
+                            elif isinstance(inv_item.consumable, (Potion, Scroll)):
+                                # stack_limit = STACK_LIMITS[inv_item.consumable.consumable_type.name]
+                                existing_quantity = inv_item.consumable.quantity
+                                existing_item_type = inv_item.consumable
+
+                            if existing_quantity >= stack_limit:
+                                raise exceptions.Impossible(
+                                    f"{format_item_name(item.name, existing_quantity)} full."
+                                )
+
+                            # Add quantities up to the stack limit
+                            amount_to_take = min(stack_limit - existing_quantity, new_quantity)
+                            existing_item_type.quantity += amount_to_take
+                            new_item_type.quantity -= amount_to_take
+
+                            self.engine.message_log.add_message(
+                                f"You picked up {amount_to_take}x {format_item_name(item.name, amount_to_take)}!"
+                            )
+
+                            # Remove item if fully picked up
+                            if new_item_type.quantity <= 0:
+                                self.engine.game_map.entities.remove(item)
+                                item.parent = inventory
+                            return
+
+                    # If it's the first time picking up this type of item
+                    if new_quantity > stack_limit:
+                        amount_to_take = stack_limit
+                        new_item_type.quantity -= amount_to_take
+                        new_item = copy.deepcopy(item)
+                        if isinstance(new_item.equippable, Ammo):
+                            new_item.equippable.quantity = amount_to_take
+                        else:
+                            new_item.consumable.quantity = amount_to_take
+
+                        inventory.items.append(new_item)
+                        self.engine.message_log.add_message(
+                            f"You picked up {amount_to_take}x {format_item_name(item.name, amount_to_take)}!"
+                        )
+                        return
+
+                    inventory.items.append(item)
+                    self.engine.message_log.add_message(
+                        f"You picked up {new_quantity}x {format_item_name(item.name, new_quantity)}!"
+                    )
+                    self.engine.game_map.entities.remove(item)
+                    item.parent = inventory
+                    return
+
+                # Handle non-stackable items
                 if len(inventory.items) >= inventory.capacity:
                     raise exceptions.Impossible("Your inventory is full.")
 
                 self.engine.game_map.entities.remove(item)
-                item.parent = self.entity.inventory
-
-                for inv_item in item.parent.items:
-                    if inv_item.name == item.name and inv_item.equippable:
-                        if isinstance(inv_item.equippable, Ammo):
-                            inv_item.equippable.quantity += 1
-                            self.engine.message_log.add_message(f"You picked up another {item.name}!")
-                            return
-
+                item.parent = inventory
                 inventory.items.append(item)
-
                 self.engine.message_log.add_message(f"You picked up the {item.name}!")
                 return
 
@@ -262,6 +341,7 @@ class RangedAction(Action):
 
                 if damage_type:
                     attack_desc = f"{self.entity.name.capitalize()} throws a rock at {target.name}"
+                    equipment.ammo.equippable.use()
                     target.fighter.take_damage(damage, damage_type, attack_desc)
         else:
             if weapon_ammo_type:

@@ -5,6 +5,7 @@ import colors
 import components.ai
 import components.inventory
 from enums.damage_types import DamageType
+from enums.consumable_type import ConsumableType
 from components.base_component import BaseComponent
 from exceptions import Impossible
 from input_handlers import (
@@ -19,6 +20,9 @@ if TYPE_CHECKING:
 
 class Consumable(BaseComponent):
     parent: Item
+
+    def __init__(self, consumable_type: ConsumableType):
+        self.consumable_type = consumable_type
 
     def get_action(self, consumer: Actor) -> Optional[ActionOrHandler]:
         """Try to return the action for this item."""
@@ -39,8 +43,21 @@ class Consumable(BaseComponent):
             inventory.items.remove(entity)
 
 
-class ConfusionConsumable(Consumable):
+class Scroll(Consumable):
+    def __init__(self):
+        super().__init__(consumable_type=ConsumableType.SCROLL)
+        self.quantity: int = 1
+
+
+class Potion(Consumable):
+    def __init__(self):
+        super().__init__(consumable_type=ConsumableType.POTION)
+        self.quantity: int = 1
+
+
+class ConfusionConsumable(Scroll):
     def __init__(self, number_of_turns: int):
+        super().__init__()
         self.number_of_turns = number_of_turns
 
     def get_action(self, consumer: Actor) -> SingleRangedAttackHandler:
@@ -73,8 +90,9 @@ class ConfusionConsumable(Consumable):
         self.consume()
 
 
-class HealingConsumable(Consumable):
+class HealingConsumable(Potion):
     def __init__(self, amount: int):
+        super().__init__()
         self.amount = amount
 
     def activate(self, action: actions.ItemAction) -> None:
@@ -91,8 +109,9 @@ class HealingConsumable(Consumable):
             raise Impossible(f"Your health is already full.")
 
 
-class FireballDamageConsumable(Consumable):
+class FireballDamageConsumable(Scroll):
     def __init__(self, damage: int, radius: int):
+        super().__init__()
         self.damage = damage
         self.radius = radius
 
@@ -124,8 +143,9 @@ class FireballDamageConsumable(Consumable):
         self.consume()
 
 
-class LightningDamageConsumable(Consumable):
+class LightningDamageConsumable(Scroll):
     def __init__(self, damage: int, maximum_range: int):
+        super().__init__()
         self.damage = damage
         self.maximum_range = maximum_range
 

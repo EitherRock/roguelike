@@ -160,7 +160,7 @@ class Ammo(Equippable):
             ammo_type: AmmoType,
     ):
         super().__init__(equipment_type=EquipmentType.AMMO, range_dmg_bonus=1)
-        self.quantity = self.random_quantity()
+        self.quantity: int = 0
         self.damage_type = damage_type
         self.ammo_type = ammo_type
 
@@ -180,4 +180,4 @@ class Ammo(Equippable):
                     inventory.items.remove(entity)
 
     def random_quantity(self) -> int:
-        return random.randint(0, 20)
+        return random.randint(1, 10)

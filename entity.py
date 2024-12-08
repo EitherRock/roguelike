@@ -11,7 +11,7 @@ from enums.render_order import RenderOrder
 if TYPE_CHECKING:
     from components.ai import BaseAI
     from components.consumable import Consumable
-    from components.ammo import Ammo
+    from components.equippable import Ammo
     from components.equipment import Equipment
     from components.equippable import Equippable
     from components.fighter import Fighter
@@ -65,6 +65,7 @@ class Entity:
     def spawn(self: T, gamemap: GameMap, x: int, y: int) -> T:
         """Spawn a copy of this instance at the given location."""
         from components.fighter import Fighter
+        from components.equippable import Ammo
 
         clone = copy.deepcopy(self)
         clone.x = x
@@ -75,6 +76,10 @@ class Entity:
             if clone.fighter.allowed_weapon_types:
                 random_weapon = random.choice(clone.fighter.allowed_weapon_types)
                 self.add_weapon(clone, random_weapon)
+
+        if isinstance(clone, Item):
+            if clone.equippable and hasattr(clone.equippable, "quantity"):
+                clone.equippable.quantity = clone.equippable.random_quantity()
 
         gamemap.entities.add(clone)
         return clone

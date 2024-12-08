@@ -3,6 +3,8 @@ from typing import Optional, TYPE_CHECKING
 from components.base_component import BaseComponent
 from enums.equipments_types import EquipmentType
 from enums.damage_types import DamageType
+from util import format_item_name
+from components.equippable import Ammo
 
 if TYPE_CHECKING:
     from entity import Actor, Item
@@ -131,13 +133,19 @@ class Equipment(BaseComponent):
         setattr(self, slot, item)
 
         if add_message:
-            self.equip_message(item.name)
+            quantity = 1
+            if isinstance(item.equippable, Ammo):
+                quantity = item.equippable.quantity
+            self.equip_message(format_item_name(item.name, quantity))
 
     def unequip_from_slot(self, slot: str, add_message: bool) -> None:
         current_item = getattr(self, slot)
 
         if add_message:
-            self.unequip_message(current_item.name)
+            quantity = 1
+            if isinstance(current_item.equippable, Ammo):
+                quantity = current_item.quantity
+            self.unequip_message(format_item_name(current_item.name, quantity))
 
         setattr(self, slot, None)
 

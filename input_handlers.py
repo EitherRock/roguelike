@@ -13,6 +13,8 @@ from actions import (
 import colors
 import exceptions
 from components.equippable import Ammo
+from util import format_item_name
+from stack_limit import STACK_LIMITS
 
 if TYPE_CHECKING:
     from engine import Engine
@@ -367,6 +369,7 @@ class InventoryEventHandler(AskUserEventHandler):
         """
 
         super().on_render(console)
+        from components.consumable import Potion, Scroll
         number_of_items_in_inventory = len(self.engine.player.inventory.items)
 
         height = number_of_items_in_inventory + 2
@@ -381,7 +384,7 @@ class InventoryEventHandler(AskUserEventHandler):
 
         y = 0
 
-        width = len(self.TITLE) + 4
+        width = len(self.TITLE) + 8
 
         console.draw_frame(
             x=x,
@@ -399,12 +402,19 @@ class InventoryEventHandler(AskUserEventHandler):
                 item_key = chr(ord("a") + i)
 
                 is_equipped = self.engine.player.equipment.item_is_equipped(item)
-                item_string = f"({item_key}) {item.name}"
+                item_name = item.name
 
                 if isinstance(item.equippable, Ammo):
-                    if item.equippable.quantity > 0:
-                        item_string += f" x{item.equippable.quantity}"
+                    quantity = item.equippable.quantity
+                    stack_limit = STACK_LIMITS[item.equippable.ammo_type.name]
+                    item_name = f"{format_item_name(item.name, quantity)} x{quantity}/{stack_limit}"
 
+                if isinstance(item.consumable, Potion) or isinstance(item.consumable, Scroll):
+                    quantity = item.consumable.quantity
+                    stack_limit = STACK_LIMITS[item.consumable.consumable_type.name]
+                    item_name = f"{format_item_name(item.name, quantity)} x{quantity}/{stack_limit}"
+
+                item_string = f"({item_key}) {item_name}"
                 if is_equipped:
                     item_string += " (E)"
                 console.print(x + 1, y + i + 1, item_string)
