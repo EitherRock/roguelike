@@ -19,8 +19,8 @@ max_items_by_floor = [
 
 max_monsters_by_floor = [
     (1, 1),
-    (4, 3),
-    (6, 5)
+    (4, 2),
+    (6, 3)
 ]
 
 item_chances: Dict[int, List[Tuple[Entity, int]]] = {
@@ -350,52 +350,54 @@ def find_and_mark_doors(dungeon: GameMap, rooms: List[RectangularRoom]) -> None:
                         adjacent_floors = 0
                         adjacent_walls = 0
 
-                        for dx, dy in ((0, 1), (1, 0), (0, -1), (-1, 0)):
+                        north = {
+                            "is_walls": False,
+                            "x_y": (0, -1)
+                        }
+
+                        east = {
+                            "is_walls": False,
+                            "x_y": (1, 0)
+                        }
+
+                        south = {
+                            "is_walls": False,
+                            "x_y": (0, 1)
+                        }
+
+                        west = {
+                            "is_walls": False,
+                            "x_y": (-1, 0)
+                        }
+
+                        for direction in (north, east, south, west):
+                            dx = direction["x_y"][0]
+                            dy = direction["x_y"][1]
                             nx, ny = x + dx, y + dy
+
                             if not dungeon.in_bounds(nx, ny):
                                 continue
                             if dungeon.tiles[nx, ny] == tile_types.floor and (nx, ny) not in room_bounds:
                                 adjacent_floors += 1
                             elif dungeon.tiles[nx, ny] == tile_types.wall:
-                                adjacent_walls += 1
+                                direction["is_walls"] = True
 
                         # A valid door:
                         # - Must have exactly 1 adjacent floor outside the room
                         # - Must have at least 2 adjacent walls
-                        if adjacent_floors == 1 and adjacent_walls >= 2:
-                            potential_doors.append((x, y))
 
+                        north_wall = north["is_walls"]
+                        south_wall = south["is_walls"]
+                        east_wall = east["is_walls"]
+                        west_wall = west["is_walls"]
+
+                        if adjacent_floors == 1:
+                            if north_wall and south_wall and not east_wall and not west_wall:
+                                potential_doors.append((x, y))
+
+                            if east_wall and west_wall and not north_wall and not south_wall:
+                                potential_doors.append((x, y))
         # Mark door tiles
         for x, y in potential_doors:
             dungeon.tiles[x, y] = tile_types.door
 
-
-# def find_and_mark_doors(dungeon: GameMap, rooms: List[RectangularRoom]) -> None:
-#     """Find and mark door locations where tunnels connect to rooms."""
-#     for room in rooms:
-#         room_bounds = {
-#             (x, y)
-#             for x in range(room.x1 + 1, room.x2)
-#             for y in range(room.y1 + 1, room.y2)
-#         }
-#
-#         potential_doors = []
-#
-#         # Check tiles at the room's perimeter
-#         for x in range(room.x1, room.x2 + 1):
-#             for y in range(room.y1, room.y2 + 1):
-#                 # Only consider perimeter tiles
-#                 if x in (room.x1, room.x2) or y in (room.y1, room.y2):
-#                     if dungeon.tiles[x, y] == tile_types.floor:
-#                         # Floor tile at the edge is a potential door
-#                         adjacent_floors = 0
-#                         for dx, dy in ((0, 1), (1, 0), (0, -1), (-1, 0)):
-#                             nx, ny = x + dx, y + dy
-#                             if dungeon.tiles[nx, ny] == tile_types.floor and (nx, ny) not in room_bounds:
-#                                 adjacent_floors += 1
-#                         if adjacent_floors == 1:  # Single connection to a tunnel
-#                             potential_doors.append((x, y))
-#
-#         # Mark door tiles
-#         for x, y in potential_doors:
-#             dungeon.tiles[x, y] = tile_types.door
