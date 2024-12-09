@@ -9,7 +9,7 @@ from util import format_item_name
 if TYPE_CHECKING:
     from tcod import Console
     from engine import Engine
-    from game_map import GameMap
+    from gamemap.game_map import GameMap
 
 
 def get_names_at_location(x: int, y: int, game_map: GameMap) -> str:

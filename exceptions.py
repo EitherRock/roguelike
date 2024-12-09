@@ -8,3 +8,8 @@ class Impossible(Exception):
 class QuitWithoutSaving(SystemExit):
     """Can be raised to exit the game without automatically saving."""
 
+
+class ReturnToMainGameHandler(Exception):
+    """Signal to return control to the main game handler."""
+    pass
+

@@ -11,13 +11,12 @@ from enums.render_order import RenderOrder
 if TYPE_CHECKING:
     from components.ai import BaseAI
     from components.consumable import Consumable
-    from components.equippable import Ammo
     from components.equipment import Equipment
     from components.equippable import Equippable
     from components.fighter import Fighter
     from components.inventory import Inventory
     from components.level import Level
-    from game_map import GameMap
+    from gamemap.game_map import GameMap
     from entity_factories import weapon_factory
 
 T = TypeVar("T", bound="Entity")
@@ -65,7 +64,6 @@ class Entity:
     def spawn(self: T, gamemap: GameMap, x: int, y: int) -> T:
         """Spawn a copy of this instance at the given location."""
         from components.fighter import Fighter
-        from components.equippable import Ammo
 
         clone = copy.deepcopy(self)
         clone.x = x

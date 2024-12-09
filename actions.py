@@ -11,6 +11,7 @@ from util import format_item_name
 if TYPE_CHECKING:
     from engine import Engine
     from entity import Actor, Entity, Item
+    from gamemap.environment_objects import EnvironmentObject
 
 
 class Action:
@@ -203,7 +204,7 @@ class TakeStairsAction(Action):
             raise exceptions.Impossible("There are no stairs here.")
 
     def descend_stairs(self) -> None:
-        from game_map import OverWorld
+        from gamemap.game_map import OverWorld
         """Handle descending stairs."""
         if isinstance(self.engine.game_world, OverWorld):
             self.engine.game_world.enter_dungeon()
@@ -211,7 +212,7 @@ class TakeStairsAction(Action):
             self.engine.game_world.descend_dungeon()
 
     def ascend_stairs(self) -> None:
-        from game_map import DungeonWorld
+        from gamemap.game_map import DungeonWorld
         """Handle ascending stairs."""
         if isinstance(self.engine.game_world, DungeonWorld):
             if self.engine.game_world.current_floor == 1:
@@ -354,3 +355,54 @@ class RangedAction(Action):
                 raise exceptions.Impossible(f"No {weapon_ammo_type.name}s equipped.")
             else:
                 raise exceptions.Impossible("Nothing to throw.")
+
+
+class EnvironmentInteractionAction(Action):
+    def perform(self) -> None:
+        """
+        Find and interact with environment objects around the player.
+        """
+        player = self.entity
+        x, y = player.x, player.y
+        nearby_objects = []
+        selected_object: Optional[EnvironmentObject] = None
+
+        # Check adjacent tiles for environment objects
+        adjacent_positions = [
+            (x, y - 1),  # North
+            (x, y + 1),  # South
+            (x - 1, y),  # West
+            (x + 1, y),  # East
+        ]
+
+        for pos in adjacent_positions:
+            environment_object = self.engine.game_map.get_environment_object_at(*pos)
+            if environment_object:
+                nearby_objects.append(environment_object)
+            # if environment_object:
+            #     return environment_object.interact()
+
+        if len(nearby_objects) == 0:
+            # If no objects are found
+            self.engine.message_log.add_message("There's nothing to interact with here.", colors.red)
+        elif len(nearby_objects) > 1:
+            selected_object = nearby_objects[self.object_index]
+            self.engine.message_log.add_message(
+                f"Selected {selected_object.name}. Press Enter to interact or Tab to switch objects.",
+                colors.white,
+            )
+            selected_object = nearby_objects[self.object_index]
+            self.engine.message_log.add_message(
+                f"Selected {selected_object.name}. Press Enter to interact or Tab to switch objects.",
+                colors.white,
+            )
+
+            # Increment index to cycle through options, loop back to start if necessary
+            self.object_index = (self.object_index + 1) % len(nearby_objects)
+            # Increment index to cycle through options, loop back to start if necessary
+            self.object_index = (self.object_index + 1) % len(nearby_objects)
+        else:
+            selected_object = nearby_objects[0]
+            return selected_object.interact()
+
+

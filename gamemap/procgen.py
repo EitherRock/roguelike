@@ -3,8 +3,9 @@ import random
 from typing import Dict, Iterator, List, Tuple, TYPE_CHECKING
 import tcod
 import entity_factories
-from game_map import GameMap
-import tile_types
+from gamemap.game_map import GameMap
+from gamemap.environment_objects import Door
+from gamemap import tile_types
 from enums.spawn_types import SpawnType
 
 if TYPE_CHECKING:
@@ -329,7 +330,7 @@ def generate_dungeon(
     return dungeon, rooms
 
 
-def find_and_mark_doors(dungeon: GameMap, rooms: List[RectangularRoom]) -> None:
+def find_and_mark_doors(dungeon: GameMap, rooms: List[RectangularRoom]):
     """Find and mark door locations where tunnels connect to rooms."""
     for room in rooms:
         room_bounds = {
@@ -399,5 +400,6 @@ def find_and_mark_doors(dungeon: GameMap, rooms: List[RectangularRoom]) -> None:
                                 potential_doors.append((x, y))
         # Mark door tiles
         for x, y in potential_doors:
-            dungeon.tiles[x, y] = tile_types.door
-
+            door = Door(x, y, is_open=False, gamemap=dungeon)
+            dungeon.environment_objects[(x, y)] = door
+            dungeon.tiles[x, y] = tile_types.closed_door
