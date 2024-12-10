@@ -7,11 +7,12 @@ import colors
 import exceptions
 from stack_limit import STACK_LIMITS
 from util import format_item_name
+from gamemap.environment_objects import EnvironmentObject
 
 if TYPE_CHECKING:
     from engine import Engine
     from entity import Actor, Entity, Item
-    from gamemap.environment_objects import EnvironmentObject
+    from gamemap.environment_objects import Door
 
 
 class Action:
@@ -357,52 +358,28 @@ class RangedAction(Action):
                 raise exceptions.Impossible("Nothing to throw.")
 
 
-class EnvironmentInteractionAction(Action):
+class EnvironmentAction(Action):
+    def __init__(self, env_object: EnvironmentObject, entity: Actor):
+        super().__init__(entity)
+        self.object = env_object
+
     def perform(self) -> None:
-        """
-        Find and interact with environment objects around the player.
-        """
-        player = self.entity
-        x, y = player.x, player.y
-        nearby_objects = []
-        selected_object: Optional[EnvironmentObject] = None
+        from gamemap.environment_objects import Door
+        if isinstance(self.object, Door):
+            action = DoorAction(self.object, self.entity)
+            return action.perform()
 
-        # Check adjacent tiles for environment objects
-        adjacent_positions = [
-            (x, y - 1),  # North
-            (x, y + 1),  # South
-            (x - 1, y),  # West
-            (x + 1, y),  # East
-        ]
 
-        for pos in adjacent_positions:
-            environment_object = self.engine.game_map.get_environment_object_at(*pos)
-            if environment_object:
-                nearby_objects.append(environment_object)
-            # if environment_object:
-            #     return environment_object.interact()
+class DoorAction(Action):
+    def __init__(self, door: Door, entity: Actor):
+        super().__init__(entity)
+        self.door = door
 
-        if len(nearby_objects) == 0:
-            # If no objects are found
-            self.engine.message_log.add_message("There's nothing to interact with here.", colors.red)
-        elif len(nearby_objects) > 1:
-            selected_object = nearby_objects[self.object_index]
-            self.engine.message_log.add_message(
-                f"Selected {selected_object.name}. Press Enter to interact or Tab to switch objects.",
-                colors.white,
-            )
-            selected_object = nearby_objects[self.object_index]
-            self.engine.message_log.add_message(
-                f"Selected {selected_object.name}. Press Enter to interact or Tab to switch objects.",
-                colors.white,
-            )
-
-            # Increment index to cycle through options, loop back to start if necessary
-            self.object_index = (self.object_index + 1) % len(nearby_objects)
-            # Increment index to cycle through options, loop back to start if necessary
-            self.object_index = (self.object_index + 1) % len(nearby_objects)
+    def perform(self) -> None:
+        if self.door.is_open:
+            self.door.close()
+            self.entity.gamemap.engine.message_log.add_message("You close the door.", colors.white)
         else:
-            selected_object = nearby_objects[0]
-            return selected_object.interact()
-
+            self.door.open()
+            self.entity.gamemap.engine.message_log.add_message("You open the door.", colors.white)
 

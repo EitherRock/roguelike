@@ -9,7 +9,7 @@ from actions import (
     BumpAction,
     PickupAction,
     WaitAction,
-    EnvironmentInteractionAction
+    EnvironmentAction
 )
 import colors
 import exceptions
@@ -127,9 +127,8 @@ class EventHandler(BaseEventHandler):
     def handle_events(self, event: tcod.event.Event) -> BaseEventHandler:
         """Handle events for input handlers with an engine."""
         action_or_state = self.dispatch(event)
-        print(action_or_state)
+
         if isinstance(action_or_state, BaseEventHandler):
-            print("new action")
             return action_or_state
         if self.handle_action(action_or_state):
             # A valid action was performed.
@@ -139,7 +138,6 @@ class EventHandler(BaseEventHandler):
             elif self.engine.player.level.requires_level_up:
                 return LevelUpEventHandler(self.engine)
             return MainGameEnventHandler(self.engine)  # Return to the main handler.
-        # print("returning self")
         return self
 
     def handle_action(self, action: Optional[Action]) -> bool:
@@ -172,7 +170,6 @@ class EventHandler(BaseEventHandler):
 
 class MainGameEnventHandler(EventHandler):
     def ev_keydown(self, event: tcod.event.KeyDown) -> Optional[ActionOrHandler]:
-        print("Moving!")
         action: Optional[Action] = None
 
         key = event.sym
@@ -211,8 +208,13 @@ class MainGameEnventHandler(EventHandler):
         elif key == tcod.event.KeySym.r:
             return SingleAutoRangedAttackHandler(self.engine)
         elif key in INTERACT_KEYS:
-            # return EnvironmentInteractionAction(player)
-            return EnvironmentObjectSelection(self.engine)
+            objects = EnvironmentObjectSelection(self.engine).nearby_objects
+            if len(objects) == 0:
+                self.engine.message_log.add_message("Nothing to interact with.", colors.white)
+            elif len(objects) == 1:
+                action = EnvironmentAction(objects[0], player)
+            else:
+                return EnvironmentObjectSelection(self.engine)
         # No valid key was pressed
         return action
 
@@ -642,12 +644,6 @@ class EnvironmentObjectSelection(AskUserEventHandler):
         self.player = engine.player
         self.nearby_objects = self.get_nearby_objects()
         self.current_object_index = 0
-        self.interacted = False
-
-        # if len(self.nearby_objects) == 1:
-        #     # Immediately interact and return to the main game handler
-        #     self.nearby_objects[0].interact()
-        #     raise exceptions.ReturnToMainGameHandler
 
     def get_nearby_objects(self):
         # Check adjacent tiles for environment objects
@@ -666,19 +662,8 @@ class EnvironmentObjectSelection(AskUserEventHandler):
 
         return objects
 
-    def perform_single_interaction(self) -> Optional[ActionOrHandler]:
-        """If only one object exists, interact with it immediately."""
-        self.nearby_objects[0].interact()
-        self.interacted = True
-        print("returning")
-        return MainGameEnventHandler(self.engine)
-
     def on_render(self, console: tcod.Console) -> None:
         super().on_render(console)
-
-        if len(self.nearby_objects) == 1 and not self.interacted:
-            print("Interacting")
-            self.perform_single_interaction()
 
         if len(self.nearby_objects) > 1:
             current_object = self.nearby_objects[self.current_object_index]
@@ -689,17 +674,15 @@ class EnvironmentObjectSelection(AskUserEventHandler):
         key = event.sym
 
         if key == tcod.event.KeySym.TAB:
-            # cycle through nearby objects if more than 1
-            pass
+            self.current_object_index = (self.current_object_index + 1) % len(self.nearby_objects)
         elif key in CONFIRM_KEYS:
             current_object = self.nearby_objects[self.current_object_index]
-            return current_object.interact()
+            return actions.EnvironmentAction(current_object, self.player)
         elif key == tcod.event.KeySym.ESCAPE:
             # Return to the main handler
             return MainGameEnventHandler(self.engine)
         elif key in MOVE_KEYS:
             return MainGameEnventHandler(self.engine)
-
 
 
 class AreaRangedAttackHandler(SelectIndexHandler):
