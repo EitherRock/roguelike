@@ -217,35 +217,6 @@ def spawn_swarm(
             entity.spawn(dungeon, x, y)
 
 
-class RectangularRoom:
-    def __init__(self, x: int, y: int, width: int, height: int):
-        self.x1 = x
-        self.y1 = y
-        self.x2 = x + width
-        self.y2 = y + height
-
-    @property
-    def center(self) -> Tuple[int, int]:
-        center_x = int((self.x1 + self.x2) / 2)
-        center_y = int((self.y1 + self.y2) / 2)
-
-        return center_x, center_y
-
-    @property
-    def inner(self) -> Tuple[slice, slice]:
-        """Return the inner area of this room as a 2D array index."""
-        return slice(self.x1 + 1, self.x2), slice(self.y1 + 1, self.y2)
-
-    def intersects(self, other: RectangularRoom) -> bool:
-        """Return True if this room overlaps with another RectangularRoom."""
-        return (
-            self.x1 <= other.x2
-            and self.x2 >= other.x1
-            and self.y1 <= other.y2
-            and self.y2 > other.y1
-        )
-
-
 def tunnel_between(
         start: Tuple[int, int], end: Tuple[int, int]
 ) -> Iterator[Tuple[int, int]]:
@@ -281,8 +252,10 @@ def generate_dungeon(
     rooms: List[RectangularRoom] = []
 
     center_of_last_room = (0, 0)
+    room_id = 0
 
     for r in range(max_rooms):
+        room_id += 1
         room_width = random.randint(room_min_size, room_max_size)
         room_height = random.randint(room_min_size, room_max_size)
 
@@ -290,7 +263,7 @@ def generate_dungeon(
         y = random.randint(0, dungeon.height - room_height - 1)
 
         # "RectangularRoom" class makes rectangles easier to work with
-        new_room = RectangularRoom(x, y, room_width, room_height)
+        new_room = RectangularRoom(room_id=room_id, x=x, y=y, width=room_width, height=room_height, room_type="Normal")
 
         # Run through the other rooms and see if they intersect with this one.
 
@@ -401,11 +374,18 @@ def find_and_mark_doors(dungeon: GameMap, rooms: List[RectangularRoom]):
                             if east_wall and west_wall and not north_wall and not south_wall:
                                 potential_doors.append((x, y))
 
+        print("RoomID:", room.room_id)
         if adjacent_floors_total == 1:
-            x, y = potential_doors[0]
-            door = Door(x, y, is_open=False, gamemap=dungeon)
-            dungeon.environment_objects[(x, y)] = door
-            dungeon.tiles[x, y] = tile_types.locked_door
+            if room.room_id != 1:
+                x, y = potential_doors[0]
+                door = Door(x, y, is_open=False, gamemap=dungeon)
+                dungeon.environment_objects[(x, y)] = door
+                dungeon.tiles[x, y] = tile_types.locked_door
+            else:
+                x, y = potential_doors[0]
+                door = Door(x, y, is_open=False, gamemap=dungeon)
+                dungeon.environment_objects[(x, y)] = door
+                dungeon.tiles[x, y] = tile_types.closed_door
         else:
             # Mark door tiles
             for x, y in potential_doors:
@@ -414,3 +394,38 @@ def find_and_mark_doors(dungeon: GameMap, rooms: List[RectangularRoom]):
                 dungeon.environment_objects[(x, y)] = door
                 dungeon.tiles[x, y] = tile_types.closed_door
 
+
+class Room:
+    def __init__(self, room_id: int, room_type: str):
+        self.room_id = room_id
+        self.room_type = room_type
+
+
+class RectangularRoom(Room):
+    def __init__(self, room_id: int, x: int, y: int, width: int, height: int, room_type: str):
+        super().__init__(room_id, room_type)
+        self.x1 = x
+        self.y1 = y
+        self.x2 = x + width
+        self.y2 = y + height
+
+    @property
+    def center(self) -> Tuple[int, int]:
+        center_x = int((self.x1 + self.x2) / 2)
+        center_y = int((self.y1 + self.y2) / 2)
+
+        return center_x, center_y
+
+    @property
+    def inner(self) -> Tuple[slice, slice]:
+        """Return the inner area of this room as a 2D array index."""
+        return slice(self.x1 + 1, self.x2), slice(self.y1 + 1, self.y2)
+
+    def intersects(self, other: RectangularRoom) -> bool:
+        """Return True if this room overlaps with another RectangularRoom."""
+        return (
+                self.x1 <= other.x2
+                and self.x2 >= other.x1
+                and self.y1 <= other.y2
+                and self.y2 > other.y1
+        )
