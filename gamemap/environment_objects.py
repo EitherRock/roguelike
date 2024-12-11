@@ -28,25 +28,18 @@ class EnvironmentObject:
 class Door(EnvironmentObject):
     """A class to represent an interactable door."""
 
-    def __init__(self, x: int, y: int, is_open: bool, gamemap: GameMap):
+    def __init__(self, x: int, y: int, is_open: bool, gamemap: GameMap, is_locked: bool = False):
         super().__init__(x, y, gamemap)
         self.x = x
         self.y = y
         self.is_open = is_open
+        self.is_locked = is_locked
 
     @property
     def tile(self):
         """Return the tile type based on the door's state."""
-        return open_door if self.is_open else closed_door
 
-    def interact(self) -> None:
-        """Open or close the door."""
-        if self.is_open:
-            self.close()
-            self.gamemap.engine.message_log.add_message("You close the door.", colors.white)
-        else:
-            self.open()
-            self.gamemap.engine.message_log.add_message("You open the door.", colors.white)
+        return open_door if self.is_open else closed_door
 
     def open(self):
         self.is_open = True

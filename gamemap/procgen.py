@@ -338,7 +338,7 @@ def find_and_mark_doors(dungeon: GameMap, rooms: List[RectangularRoom]):
             for x in range(room.x1 + 1, room.x2)
             for y in range(room.y1 + 1, room.y2)
         }
-
+        adjacent_floors_total = 0
         potential_doors = []
 
         # Check tiles at the room's perimeter
@@ -347,6 +347,7 @@ def find_and_mark_doors(dungeon: GameMap, rooms: List[RectangularRoom]):
                 # Only consider perimeter tiles
                 if x in (room.x1, room.x2) or y in (room.y1, room.y2):
                     if dungeon.tiles[x, y] == tile_types.floor:
+                        adjacent_floors_total += 1
                         # Floor tile at the edge is a potential door
                         adjacent_floors = 0
                         adjacent_walls = 0
@@ -380,6 +381,7 @@ def find_and_mark_doors(dungeon: GameMap, rooms: List[RectangularRoom]):
                                 continue
                             if dungeon.tiles[nx, ny] == tile_types.floor and (nx, ny) not in room_bounds:
                                 adjacent_floors += 1
+
                             elif dungeon.tiles[nx, ny] == tile_types.wall:
                                 direction["is_walls"] = True
 
@@ -398,8 +400,17 @@ def find_and_mark_doors(dungeon: GameMap, rooms: List[RectangularRoom]):
 
                             if east_wall and west_wall and not north_wall and not south_wall:
                                 potential_doors.append((x, y))
-        # Mark door tiles
-        for x, y in potential_doors:
+
+        if adjacent_floors_total == 1:
+            x, y = potential_doors[0]
             door = Door(x, y, is_open=False, gamemap=dungeon)
             dungeon.environment_objects[(x, y)] = door
-            dungeon.tiles[x, y] = tile_types.closed_door
+            dungeon.tiles[x, y] = tile_types.locked_door
+        else:
+            # Mark door tiles
+            for x, y in potential_doors:
+                # print("Normal Door")
+                door = Door(x, y, is_open=False, gamemap=dungeon)
+                dungeon.environment_objects[(x, y)] = door
+                dungeon.tiles[x, y] = tile_types.closed_door
+

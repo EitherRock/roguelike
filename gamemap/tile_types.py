@@ -82,3 +82,10 @@ open_door = new_tile(
     dark=(ord("-"), (0, 0, 100), (50, 50, 150)),
     light=(ord("-"), (255, 255, 255), (200, 180, 50))
 )
+
+locked_door = new_tile(
+    walkable=False,
+    transparent=False,
+    dark=(ord("x"), (0, 0, 100), (50, 50, 150)),
+    light=(ord("x"), (255, 255, 255), (200, 180, 50))
+)
