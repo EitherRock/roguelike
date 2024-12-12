@@ -390,7 +390,7 @@ class DoorAction(Action):
             for item in self.entity.inventory.items:
                 if isinstance(item.consumable, Key):
                     if item.consumable.key_id == self.door.room_id:
-                        self.door.is_locked = False  # Unlock the door
+                        self.door.unlock()  # Unlock the door
                         self.entity.gamemap.engine.message_log.add_message(
                             "You use the key to unlock the door.", colors.white
                         )
@@ -400,5 +400,6 @@ class DoorAction(Action):
                         return  # Exit after unlocking and opening the door
 
             # If no matching key is found
-            self.entity.gamemap.engine.message_log.add_message("The door is locked and you don't have the right key.",
-                                                               colors.red)
+            self.door.update_tile()
+            self.entity.gamemap.engine.message_log.add_message("The door is locked.",
+                                                               colors.white)

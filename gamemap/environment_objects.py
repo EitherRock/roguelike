@@ -1,6 +1,6 @@
 from __future__ import annotations
 from typing import Tuple, TYPE_CHECKING
-from gamemap.tile_types import closed_door, open_door
+from gamemap.tile_types import closed_door, open_door, locked_door
 import colors
 
 
@@ -47,22 +47,30 @@ class Door(EnvironmentObject):
     @property
     def tile(self):
         """Return the tile type based on the door's state."""
-
+        if self.is_locked:
+            return locked_door
         return open_door if self.is_open else closed_door
 
     def open(self):
         self.is_open = True
+        self.is_locked = False  # Ensure the door is unlocked when opened
         self.update_tile()
 
     def close(self):
         self.is_open = False
         self.update_tile()
 
+    def lock(self):
+        self.is_locked = True
+        self.is_open = False
+        self.update_tile()
+
+    def unlock(self):
+        self.is_locked = False
+        self.update_tile()
+
     def update_tile(self) -> None:
         """Update the game map tile to reflect the door's state."""
-        if self.is_open:
-            self.gamemap.tiles[self.x, self.y] = open_door
-        else:
-            self.gamemap.tiles[self.x, self.y] = closed_door
+        self.gamemap.tiles[self.x, self.y] = self.tile
 
 

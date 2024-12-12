@@ -402,7 +402,7 @@ def find_and_mark_doors(dungeon: GameMap, rooms: List[RectangularRoom]):
 
                 door = Door(x, y, is_open=False, gamemap=dungeon, is_locked=True, room_id=room.room_id)
                 dungeon.environment_objects[(x, y)] = door
-                dungeon.tiles[x, y] = tile_types.locked_door
+                dungeon.tiles[x, y] = tile_types.closed_door
             else:
                 x, y = potential_doors[0]
                 door = Door(x, y, is_open=False, gamemap=dungeon, room_id=room.room_id)
