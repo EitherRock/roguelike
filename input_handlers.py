@@ -459,7 +459,11 @@ class InventoryActivateHandler(InventoryEventHandler):
     TITLE = "Slect an item to use"
 
     def on_item_selected(self, item: Item) -> Optional[ActionOrHandler]:
+        from components.consumable import Miscellaneous
         if item.consumable:
+            if isinstance(item.consumable, Miscellaneous):
+                self.engine.message_log.add_message(f"Cannot use {item.name} here.", colors.impossible)
+                return None
             # Return the action for the selected item.
             return item.consumable.get_action(self.engine.player)
         elif item.equippable:

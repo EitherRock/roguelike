@@ -1,4 +1,6 @@
 from __future__ import annotations
+
+import copy
 import random
 from typing import Dict, Iterator, List, Tuple, TYPE_CHECKING
 import tcod
@@ -7,10 +9,12 @@ from gamemap.game_map import GameMap
 from gamemap.environment_objects import Door
 from gamemap import tile_types
 from enums.spawn_types import SpawnType
+from components.consumable import Key
+from entity import Actor
 
 if TYPE_CHECKING:
     from engine import Engine
-    from entity import Entity
+    from entity import Entity, Actor
 
 
 max_items_by_floor = [
@@ -157,7 +161,8 @@ def spawn_single(entity: Entity, dungeon: GameMap, room: RectangularRoom) -> Non
 
     # Ensure no entity is already at the chosen location
     if not any(existing_entity.x == x and existing_entity.y == y for existing_entity in dungeon.entities):
-        entity.spawn(dungeon, x, y)
+        # entity.spawn(dungeon, x, y)
+        room.room_entities.append(entity.spawn(dungeon, x, y))
 
 
 def spawn_double(entity: Entity, dungeon: GameMap, room: RectangularRoom) -> None:
@@ -175,7 +180,8 @@ def spawn_double(entity: Entity, dungeon: GameMap, room: RectangularRoom) -> Non
 
         # Ensure no entity is already at the chosen location
         if not any(existing_entity.x == x and existing_entity.y == y for existing_entity in dungeon.entities):
-            entity.spawn(dungeon, x, y)
+            # entity.spawn(dungeon, x, y)
+            room.room_entities.append(entity.spawn(dungeon, x, y))
 
 
 def spawn_triple(entity: Entity, dungeon: GameMap, room: RectangularRoom) -> None:
@@ -193,7 +199,8 @@ def spawn_triple(entity: Entity, dungeon: GameMap, room: RectangularRoom) -> Non
 
         # Ensure no entity is already at the chosen location
         if not any(existing_entity.x == x and existing_entity.y == y for existing_entity in dungeon.entities):
-            entity.spawn(dungeon, x, y)
+            # entity.spawn(dungeon, x, y)
+            room.room_entities.append(entity.spawn(dungeon, x, y))
 
 
 def spawn_swarm(
@@ -214,7 +221,8 @@ def spawn_swarm(
         y = random.randint(room.y1 + 1, room.y2 - 1)
 
         if not any(existing_entity.x == x and existing_entity.y == y for existing_entity in dungeon.entities):
-            entity.spawn(dungeon, x, y)
+            # entity.spawn(dungeon, x, y)
+            room.room_entities.append(entity.spawn(dungeon, x, y))
 
 
 def tunnel_between(
@@ -305,6 +313,7 @@ def generate_dungeon(
 
 def find_and_mark_doors(dungeon: GameMap, rooms: List[RectangularRoom]):
     """Find and mark door locations where tunnels connect to rooms."""
+    from entity import Actor
     for room in rooms:
         room_bounds = {
             (x, y)
@@ -374,23 +383,35 @@ def find_and_mark_doors(dungeon: GameMap, rooms: List[RectangularRoom]):
                             if east_wall and west_wall and not north_wall and not south_wall:
                                 potential_doors.append((x, y))
 
-        print("RoomID:", room.room_id)
         if adjacent_floors_total == 1:
             if room.room_id != 1:
                 x, y = potential_doors[0]
-                door = Door(x, y, is_open=False, gamemap=dungeon)
+                key = copy.deepcopy(entity_factories.key)
+                if isinstance(key.consumable, Key):
+                    key.consumable.key_id = room.room_id
+
+                    # Assign key to an enemy not in the current room
+                    other_rooms = [r for r in rooms if r.room_id != room.room_id]
+                    all_enemies = [enemy for other_room in other_rooms for enemy in other_room.room_entities if
+                                   isinstance(enemy, Actor)]
+
+                    if all_enemies:
+                        chosen_enemy = random.choice(all_enemies)
+                        key.parent = chosen_enemy.inventory
+                        chosen_enemy.inventory.items.append(key)
+
+                door = Door(x, y, is_open=False, gamemap=dungeon, is_locked=True, room_id=room.room_id)
                 dungeon.environment_objects[(x, y)] = door
                 dungeon.tiles[x, y] = tile_types.locked_door
             else:
                 x, y = potential_doors[0]
-                door = Door(x, y, is_open=False, gamemap=dungeon)
+                door = Door(x, y, is_open=False, gamemap=dungeon, room_id=room.room_id)
                 dungeon.environment_objects[(x, y)] = door
                 dungeon.tiles[x, y] = tile_types.closed_door
         else:
             # Mark door tiles
             for x, y in potential_doors:
-                # print("Normal Door")
-                door = Door(x, y, is_open=False, gamemap=dungeon)
+                door = Door(x, y, is_open=False, gamemap=dungeon, room_id=room.room_id)
                 dungeon.environment_objects[(x, y)] = door
                 dungeon.tiles[x, y] = tile_types.closed_door
 
@@ -399,6 +420,7 @@ class Room:
     def __init__(self, room_id: int, room_type: str):
         self.room_id = room_id
         self.room_type = room_type
+        self.room_entities: List = []
 
 
 class RectangularRoom(Room):

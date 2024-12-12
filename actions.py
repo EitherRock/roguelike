@@ -376,10 +376,29 @@ class DoorAction(Action):
         self.door = door
 
     def perform(self) -> None:
-        if self.door.is_open:
-            self.door.close()
-            self.entity.gamemap.engine.message_log.add_message("You close the door.", colors.white)
-        else:
-            self.door.open()
-            self.entity.gamemap.engine.message_log.add_message("You open the door.", colors.white)
+        from components.consumable import Key
 
+        if not self.door.is_locked:
+            if self.door.is_open:
+                self.door.close()
+                self.entity.gamemap.engine.message_log.add_message("You close the door.", colors.white)
+            else:
+                self.door.open()
+                self.entity.gamemap.engine.message_log.add_message("You open the door.", colors.white)
+        else:
+            # Check player's inventory for a key that matches the door's ID
+            for item in self.entity.inventory.items:
+                if isinstance(item.consumable, Key):
+                    if item.consumable.key_id == self.door.room_id:
+                        self.door.is_locked = False  # Unlock the door
+                        self.entity.gamemap.engine.message_log.add_message(
+                            "You use the key to unlock the door.", colors.white
+                        )
+                        self.door.open()
+                        item.consumable.consume()
+                        self.entity.gamemap.engine.message_log.add_message("You open the door.", colors.white)
+                        return  # Exit after unlocking and opening the door
+
+            # If no matching key is found
+            self.entity.gamemap.engine.message_log.add_message("The door is locked and you don't have the right key.",
+                                                               colors.red)

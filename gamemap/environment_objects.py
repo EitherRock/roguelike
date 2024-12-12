@@ -28,12 +28,21 @@ class EnvironmentObject:
 class Door(EnvironmentObject):
     """A class to represent an interactable door."""
 
-    def __init__(self, x: int, y: int, is_open: bool, gamemap: GameMap, is_locked: bool = False):
+    def __init__(
+            self,
+            x: int,
+            y: int,
+            is_open: bool,
+            gamemap: GameMap,
+            room_id: int,
+            is_locked: bool = False
+    ):
         super().__init__(x, y, gamemap)
         self.x = x
         self.y = y
         self.is_open = is_open
         self.is_locked = is_locked
+        self.room_id = room_id
 
     @property
     def tile(self):

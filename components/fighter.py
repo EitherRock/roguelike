@@ -115,6 +115,11 @@ class Fighter(BaseComponent):
         else:
             death_message = f"{self.parent.name} is dead!"
             death_message_color = colors.enemy_die
+
+            for item in self.parent.inventory.items:
+                if item.name == "Key":
+                    self.parent.inventory.drop(item)
+
         self.parent.char = "%"
         self.parent.color = (191, 0, 0)
         self.parent.blocks_movement = False

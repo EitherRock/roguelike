@@ -6,6 +6,7 @@ from entity import Actor, Item
 from gamemap import tile_types
 import colors
 from gamemap.environment_objects import EnvironmentObject
+from components.consumable import Key
 
 if TYPE_CHECKING:
     from engine import Engine
@@ -32,7 +33,7 @@ class GameMap:
         self.downstairs_location = (0, 0)
         self.upstairs_location = None
         self.environment_objects: Dict[Tuple[int, int], EnvironmentObject] = {}
-        # self.doors: Dict[(int, int), Door] = {}
+        self.keys: List[Key] = []
 
     @property
     def gamemap(self) -> GameMap:
