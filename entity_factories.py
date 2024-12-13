@@ -187,6 +187,10 @@ lantern = Item(
     char="*", color=(255, 255, 0), name="Lantern", equippable=equippable.Lantern()
 )
 
+key = Item(
+    char="?", color=(255, 255, 0), name="Key", consumable=consumable.Key()
+)
+
 weapon_factory = {
     WeaponType.DAGGER: dagger,
     WeaponType.UNARMED: unarmed,

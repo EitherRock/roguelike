@@ -7,10 +7,12 @@ import colors
 import exceptions
 from stack_limit import STACK_LIMITS
 from util import format_item_name
+from gamemap.environment_objects import EnvironmentObject
 
 if TYPE_CHECKING:
     from engine import Engine
     from entity import Actor, Entity, Item
+    from gamemap.environment_objects import Door
 
 
 class Action:
@@ -203,7 +205,7 @@ class TakeStairsAction(Action):
             raise exceptions.Impossible("There are no stairs here.")
 
     def descend_stairs(self) -> None:
-        from game_map import OverWorld
+        from gamemap.game_map import OverWorld
         """Handle descending stairs."""
         if isinstance(self.engine.game_world, OverWorld):
             self.engine.game_world.enter_dungeon()
@@ -211,7 +213,7 @@ class TakeStairsAction(Action):
             self.engine.game_world.descend_dungeon()
 
     def ascend_stairs(self) -> None:
-        from game_map import DungeonWorld
+        from gamemap.game_map import DungeonWorld
         """Handle ascending stairs."""
         if isinstance(self.engine.game_world, DungeonWorld):
             if self.engine.game_world.current_floor == 1:
@@ -354,3 +356,50 @@ class RangedAction(Action):
                 raise exceptions.Impossible(f"No {weapon_ammo_type.name}s equipped.")
             else:
                 raise exceptions.Impossible("Nothing to throw.")
+
+
+class EnvironmentAction(Action):
+    def __init__(self, env_object: EnvironmentObject, entity: Actor):
+        super().__init__(entity)
+        self.object = env_object
+
+    def perform(self) -> None:
+        from gamemap.environment_objects import Door
+        if isinstance(self.object, Door):
+            action = DoorAction(self.object, self.entity)
+            return action.perform()
+
+
+class DoorAction(Action):
+    def __init__(self, door: Door, entity: Actor):
+        super().__init__(entity)
+        self.door = door
+
+    def perform(self) -> None:
+        from components.consumable import Key
+
+        if not self.door.is_locked:
+            if self.door.is_open:
+                self.door.close()
+                self.entity.gamemap.engine.message_log.add_message("You close the door.", colors.white)
+            else:
+                self.door.open()
+                self.entity.gamemap.engine.message_log.add_message("You open the door.", colors.white)
+        else:
+            # Check player's inventory for a key that matches the door's ID
+            for item in self.entity.inventory.items:
+                if isinstance(item.consumable, Key):
+                    if item.consumable.key_id == self.door.room_id:
+                        self.door.unlock()  # Unlock the door
+                        self.entity.gamemap.engine.message_log.add_message(
+                            "You use the key to unlock the door.", colors.white
+                        )
+                        self.door.open()
+                        item.consumable.consume()
+                        self.entity.gamemap.engine.message_log.add_message("You open the door.", colors.white)
+                        return  # Exit after unlocking and opening the door
+
+            # If no matching key is found
+            self.door.update_tile()
+            self.entity.gamemap.engine.message_log.add_message("The door is locked.",
+                                                               colors.white)

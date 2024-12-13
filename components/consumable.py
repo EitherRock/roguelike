@@ -58,6 +58,10 @@ class Potion(Consumable):
     def __init__(self):
         super().__init__(consumable_type=ConsumableType.POTION)
 
+class Miscellaneous(Consumable):
+    def __init__(self):
+        super().__init__(consumable_type=ConsumableType.MISC)
+
 
 class ConfusionConsumable(Scroll):
     def __init__(self, number_of_turns: int):
@@ -172,3 +176,12 @@ class LightningDamageConsumable(Scroll):
             self.consume()
         else:
             raise Impossible("No enemy is close enough to strike.")
+
+
+class Key(Miscellaneous):
+    def __init__(self):
+        super().__init__()
+        self.key_id: int = 0
+
+    # def activate(self, action: actions.ItemAction) -> None:
+    #     self.consume()

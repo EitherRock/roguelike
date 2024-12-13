@@ -10,7 +10,7 @@ import render_functions
 
 if TYPE_CHECKING:
     from entity import Actor
-    from game_map import GameMap, DungeonWorld, OverWorld
+    from gamemap.game_map import GameMap, DungeonWorld, OverWorld
 
 
 class Engine:
@@ -43,7 +43,7 @@ class Engine:
         self.game_map.explored |= self.game_map.visible
 
     def render(self, console: Console) -> None:
-        from game_map import DungeonWorld, OverWorld
+        from gamemap.game_map import DungeonWorld, OverWorld
         self.game_map.render(console)
 
         self.message_log.render(console=console, x=21, y=45, width=40, height=5)

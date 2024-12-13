@@ -8,7 +8,8 @@ from actions import (
     Action,
     BumpAction,
     PickupAction,
-    WaitAction
+    WaitAction,
+    EnvironmentAction
 )
 import colors
 import exceptions
@@ -60,6 +61,10 @@ WAIT_KEYS = {
 CONFIRM_KEYS = {
     tcod.event.KeySym.RETURN,
     tcod.event.KeySym.KP_ENTER
+}
+
+INTERACT_KEYS = {
+    tcod.event.KeySym.RETURN
 }
 
 
@@ -122,6 +127,7 @@ class EventHandler(BaseEventHandler):
     def handle_events(self, event: tcod.event.Event) -> BaseEventHandler:
         """Handle events for input handlers with an engine."""
         action_or_state = self.dispatch(event)
+
         if isinstance(action_or_state, BaseEventHandler):
             return action_or_state
         if self.handle_action(action_or_state):
@@ -201,7 +207,14 @@ class MainGameEnventHandler(EventHandler):
             return LookHandler(self.engine)
         elif key == tcod.event.KeySym.r:
             return SingleAutoRangedAttackHandler(self.engine)
-
+        elif key in INTERACT_KEYS:
+            objects = EnvironmentObjectSelection(self.engine).nearby_objects
+            if len(objects) == 0:
+                self.engine.message_log.add_message("Nothing to interact with.", colors.white)
+            elif len(objects) == 1:
+                action = EnvironmentAction(objects[0], player)
+            else:
+                return EnvironmentObjectSelection(self.engine)
         # No valid key was pressed
         return action
 
@@ -446,7 +459,11 @@ class InventoryActivateHandler(InventoryEventHandler):
     TITLE = "Slect an item to use"
 
     def on_item_selected(self, item: Item) -> Optional[ActionOrHandler]:
+        from components.consumable import Miscellaneous
         if item.consumable:
+            if isinstance(item.consumable, Miscellaneous):
+                self.engine.message_log.add_message(f"Cannot use {item.name} here.", colors.impossible)
+                return None
             # Return the action for the selected item.
             return item.consumable.get_action(self.engine.player)
         elif item.equippable:
@@ -591,7 +608,7 @@ class SingleAutoRangedAttackHandler(AskUserEventHandler):
     def ev_keydown(self, event: tcod.event.KeyDown) -> Optional[ActionOrHandler]:
         key = event.sym
 
-        if key == tcod.event.KeySym.r:
+        if key == tcod.event.KeySym.TAB:
             # Cycle to the next actor in range
             if self.in_range_actors:
                 self.current_actor_index = (self.current_actor_index + 1) % len(self.in_range_actors)
@@ -621,6 +638,55 @@ class SingleAutoRangedAttackHandler(AskUserEventHandler):
             return MainGameEnventHandler(self.engine)
 
         return None
+
+
+class EnvironmentObjectSelection(AskUserEventHandler):
+    """Handles selecting nearby environment objects"""
+
+    def __init__(self, engine: Engine):
+        super().__init__(engine)
+        self.player = engine.player
+        self.nearby_objects = self.get_nearby_objects()
+        self.current_object_index = 0
+
+    def get_nearby_objects(self):
+        # Check adjacent tiles for environment objects
+        objects = []
+        adjacent_positions = [
+            (self.player.x, self.player.y - 1),  # North
+            (self.player.x, self.player.y + 1),  # South
+            (self.player.x - 1, self.player.y),  # West
+            (self.player.x + 1, self.player.y),  # East
+        ]
+
+        for pos in adjacent_positions:
+            environment_object = self.engine.game_map.get_environment_object_at(*pos)
+            if environment_object:
+                objects.append(environment_object)
+
+        return objects
+
+    def on_render(self, console: tcod.Console) -> None:
+        super().on_render(console)
+
+        if len(self.nearby_objects) > 1:
+            current_object = self.nearby_objects[self.current_object_index]
+            console.rgb["bg"][current_object.x, current_object.y] = colors.white
+            console.rgb["fg"][current_object.x, current_object.y] = colors.black
+
+    def ev_keydown(self, event: tcod.event.KeyDown) -> Optional[ActionOrHandler]:
+        key = event.sym
+
+        if key == tcod.event.KeySym.TAB:
+            self.current_object_index = (self.current_object_index + 1) % len(self.nearby_objects)
+        elif key in CONFIRM_KEYS:
+            current_object = self.nearby_objects[self.current_object_index]
+            return actions.EnvironmentAction(current_object, self.player)
+        elif key == tcod.event.KeySym.ESCAPE:
+            # Return to the main handler
+            return MainGameEnventHandler(self.engine)
+        elif key in MOVE_KEYS:
+            return MainGameEnventHandler(self.engine)
 
 
 class AreaRangedAttackHandler(SelectIndexHandler):

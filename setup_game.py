@@ -9,7 +9,7 @@ import tcod
 import colors
 from engine import Engine
 import entity_factories
-from game_map import DungeonWorld, OverWorld
+from gamemap.game_map import DungeonWorld, OverWorld
 import input_handlers
 from tcod import libtcodpy
 
