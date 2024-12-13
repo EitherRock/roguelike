@@ -28,6 +28,8 @@ max_monsters_by_floor = [
     (6, 3)
 ]
 
+locked_room_item_chances: Dict[int, List[Tuple[Entity, int]]] = {}
+
 item_chances: Dict[int, List[Tuple[Entity, int]]] = {
     0: [
         (entity_factories.health_potion, 20),
