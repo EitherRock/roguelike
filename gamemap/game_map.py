@@ -143,7 +143,7 @@ class DungeonWorld(World):
             map_height=map_height
         )
 
-        self.rooms: List = []
+        # self.rooms: List = []
         self.max_rooms = max_rooms
 
         self.room_min_size = room_min_size
@@ -165,8 +165,6 @@ class DungeonWorld(World):
             map_height=self.map_height,
             engine=self.engine,
         )
-
-        find_and_mark_doors(self.engine.game_map, self.rooms)
 
     def descend_dungeon(self) -> None:
         """Move deeper into the DungeonWorld."""
