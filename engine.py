@@ -39,6 +39,19 @@ class Engine:
             (self.player.x, self.player.y),
             radius=self.player.fighter.fov,
         )
+
+        # Apply a circular mask to enforce a circular FOV
+        fov_radius = self.player.fighter.fov
+        cx, cy = self.player.x, self.player.y
+        for x in range(self.game_map.width):
+            for y in range(self.game_map.height):
+                # Calculate the distance from the player's position
+                dx = x - cx
+                dy = y - cy
+                distance = (dx ** 2 + dy ** 2) ** 0.5
+                if distance > fov_radius:
+                    self.game_map.visible[x, y] = False
+
         # If a tile is "visible" it should be added to "explored".
         self.game_map.explored |= self.game_map.visible
 

@@ -9,8 +9,9 @@ from gamemap.game_map import GameMap
 from gamemap.environment_objects import Door
 from gamemap import tile_types
 from enums.spawn_types import SpawnType
+from enums.room_types import RoomType
 from components.consumable import Key
-from entity import Actor
+
 
 if TYPE_CHECKING:
     from engine import Engine
@@ -19,18 +20,27 @@ if TYPE_CHECKING:
 
 max_items_by_floor = [
     (1, 1),  # test value
-    (4, 2)
+    (4, 2),
+    (10, 3),
+    (25, 4)
 ]
 
 max_monsters_by_floor = [
     (1, 1),
     (4, 2),
-    (6, 3)
+    (10, 3),
+    (25, 4)
 ]
 
-locked_room_item_chances: Dict[int, List[Tuple[Entity, int]]] = {}
+max_locked_items_by_floor = [
+    (1, 2),
+    (4, 3),
+    (10, 4),
+    (25, 5),
 
-item_chances: Dict[int, List[Tuple[Entity, int]]] = {
+]
+
+locked_room_item_chances: Dict[int, List[Tuple[Entity, int]]] = {
     0: [
         (entity_factories.health_potion, 20),
         (entity_factories.long_bow, 5),
@@ -39,6 +49,15 @@ item_chances: Dict[int, List[Tuple[Entity, int]]] = {
         (entity_factories.fireball_scroll, 1),
         (entity_factories.sword, 1),
         (entity_factories.chain_mail, 1),
+        (entity_factories.arrow, 15),
+        (entity_factories.rock, 30),
+    ],
+}
+
+item_chances: Dict[int, List[Tuple[Entity, int]]] = {
+    0: [
+        (entity_factories.health_potion, 20),
+        (entity_factories.bow, 5),
         (entity_factories.arrow, 15),
         (entity_factories.rock, 30)
     ],
@@ -111,6 +130,20 @@ def get_entities_at_random(
 
 
 def place_entities(room: RectangularRoom, dungeon: GameMap, floor_number: int,) -> None:
+    # Check if the room is a locked room
+    is_locked_room = room.room_type == RoomType.LOCKED
+
+    if is_locked_room:
+        # Get the exact number of locked items for the floor
+        number_of_locked_items = get_max_value_for_floor(max_locked_items_by_floor, floor_number)
+        locked_room_items: List[Entity] = get_entities_at_random(
+            locked_room_item_chances, number_of_locked_items, floor_number
+        )
+        # Spawn each locked room item
+        for entity in locked_room_items:
+            spawn_single(entity, dungeon, room)
+        return  # Skip spawning regular entities in locked rooms.
+
     # How many monsters can spawn in the room?
     number_of_monsters = random.randint(
         0, get_max_value_for_floor(max_monsters_by_floor, floor_number)
@@ -260,12 +293,14 @@ def generate_dungeon(
     dungeon = GameMap(engine, map_width, map_height, entities=[player])
 
     rooms: List[RectangularRoom] = []
+    keys: List[Key] = []
 
     center_of_last_room = (0, 0)
-    room_id = 0
+    room_num = 0
+    floor_num = engine.game_world.current_floor
 
     for r in range(max_rooms):
-        room_id += 1
+        room_num += 1
         room_width = random.randint(room_min_size, room_max_size)
         room_height = random.randint(room_min_size, room_max_size)
 
@@ -273,10 +308,15 @@ def generate_dungeon(
         y = random.randint(0, dungeon.height - room_height - 1)
 
         # "RectangularRoom" class makes rectangles easier to work with
-        new_room = RectangularRoom(room_id=room_id, x=x, y=y, width=room_width, height=room_height, room_type="Normal")
+        new_room = RectangularRoom(
+            room_id=f"{str(floor_num)}_{str(room_num)}",
+            x=x,
+            y=y,
+            width=room_width,
+            height=room_height,
+            room_type=RoomType.NORMAL)
 
         # Run through the other rooms and see if they intersect with this one.
-
         if any(new_room.intersects(other_room) for other_room in rooms):
             continue  # This room intersects, so go to the next attempt.
         # If there are no intersections then the room is valid.
@@ -298,8 +338,6 @@ def generate_dungeon(
 
             center_of_last_room = new_room.center
 
-        place_entities(new_room, dungeon, engine.game_world.current_floor)
-
         dungeon.tiles[center_of_last_room] = tile_types.down_stairs
         dungeon.downstairs_location = center_of_last_room
         dungeon.tiles[dungeon.upstairs_location] = tile_types.up_stairs
@@ -307,16 +345,60 @@ def generate_dungeon(
         # Finally, append the new room to the list.
         rooms.append(new_room)
 
-    # Mark doors after all rooms and tunnels are generated
-    # find_and_mark_doors(dungeon, rooms)
+    keys = find_and_mark_doors(dungeon, rooms, floor_num=floor_num)
+
+    for room in rooms:
+        place_entities(room, dungeon, engine.game_world.current_floor)
+
+    distribute_keys(keys, rooms)
 
     return dungeon, rooms
 
 
-def find_and_mark_doors(dungeon: GameMap, rooms: List[RectangularRoom]):
+def distribute_keys(keys: List[Key], rooms: List[RectangularRoom]) -> None:
+    """Distribute keys to enemies after they have been placed."""
+    from entity import Actor
+
+    all_enemies = []
+
+    # Collect all enemies and their room IDs
+    for room in rooms:
+        enemies = [
+            entity for entity in getattr(room, "room_entities", [])
+            if isinstance(entity, Actor)
+        ]
+        all_enemies.extend([(enemy, room.room_id) for enemy in enemies])
+
+    # Assign keys to enemies
+    for key in keys:
+        target_locked_room_id = key.consumable.key_id
+
+        # Find enemies not in the locked room the key corresponds to
+        eligible_enemies = [
+            (enemy, room_id) for enemy, room_id in all_enemies
+            if room_id != target_locked_room_id
+        ]
+
+        # Fallback: If all eligible enemies are in locked rooms
+        if not eligible_enemies:
+            eligible_enemies = all_enemies
+
+        if eligible_enemies:
+            chosen_enemy, _ = random.choice(eligible_enemies)
+            key.parent = chosen_enemy.inventory
+            chosen_enemy.inventory.items.append(key)
+
+
+def find_and_mark_doors(
+        dungeon: GameMap,
+        rooms: List[RectangularRoom],
+        floor_num: int,
+) -> List[Key]:
     """Find and mark door locations where tunnels connect to rooms."""
     from entity import Actor
+    keys = []
     for room in rooms:
+        print(room.room_id)
         room_bounds = {
             (x, y)
             for x in range(room.x1 + 1, room.x2)
@@ -386,25 +468,17 @@ def find_and_mark_doors(dungeon: GameMap, rooms: List[RectangularRoom]):
                                 potential_doors.append((x, y))
 
         if adjacent_floors_total == 1:
-            if room.room_id != 1:
+            if room.room_id != f"{str(floor_num)}_1":
                 x, y = potential_doors[0]
                 key = copy.deepcopy(entity_factories.key)
                 if isinstance(key.consumable, Key):
                     key.consumable.key_id = room.room_id
-
-                    # Assign key to an enemy not in the current room
-                    other_rooms = [r for r in rooms if r.room_id != room.room_id]
-                    all_enemies = [enemy for other_room in other_rooms for enemy in other_room.room_entities if
-                                   isinstance(enemy, Actor)]
-
-                    if all_enemies:
-                        chosen_enemy = random.choice(all_enemies)
-                        key.parent = chosen_enemy.inventory
-                        chosen_enemy.inventory.items.append(key)
+                    keys.append(key)
 
                 door = Door(x, y, is_open=False, gamemap=dungeon, is_locked=True, room_id=room.room_id)
                 dungeon.environment_objects[(x, y)] = door
                 dungeon.tiles[x, y] = tile_types.closed_door
+                room.room_type = RoomType.LOCKED
             else:
                 x, y = potential_doors[0]
                 door = Door(x, y, is_open=False, gamemap=dungeon, room_id=room.room_id)
@@ -416,17 +490,18 @@ def find_and_mark_doors(dungeon: GameMap, rooms: List[RectangularRoom]):
                 door = Door(x, y, is_open=False, gamemap=dungeon, room_id=room.room_id)
                 dungeon.environment_objects[(x, y)] = door
                 dungeon.tiles[x, y] = tile_types.closed_door
+    return keys
 
 
 class Room:
-    def __init__(self, room_id: int, room_type: str):
+    def __init__(self, room_id: str, room_type: RoomType):
         self.room_id = room_id
         self.room_type = room_type
         self.room_entities: List = []
 
 
 class RectangularRoom(Room):
-    def __init__(self, room_id: int, x: int, y: int, width: int, height: int, room_type: str):
+    def __init__(self, room_id: str, x: int, y: int, width: int, height: int, room_type: RoomType):
         super().__init__(room_id, room_type)
         self.x1 = x
         self.y1 = y

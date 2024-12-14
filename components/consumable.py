@@ -181,7 +181,7 @@ class LightningDamageConsumable(Scroll):
 class Key(Miscellaneous):
     def __init__(self):
         super().__init__()
-        self.key_id: int = 0
+        self.key_id: str
 
     # def activate(self, action: actions.ItemAction) -> None:
     #     self.consume()

@@ -34,7 +34,7 @@ class Door(EnvironmentObject):
             y: int,
             is_open: bool,
             gamemap: GameMap,
-            room_id: int,
+            room_id: str,
             is_locked: bool = False
     ):
         super().__init__(x, y, gamemap)
