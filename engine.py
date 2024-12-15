@@ -4,6 +4,8 @@ import pickle
 from typing import TYPE_CHECKING, Union
 from tcod.console import Console
 from tcod.map import compute_fov
+
+import colors
 import exceptions
 from message_log import MessageLog
 import render_functions
@@ -24,13 +26,42 @@ class Engine:
         self.game_worlds = {}
         self.active_map = None
 
-    def handle_enemy_turns(self) -> None:
-        for entity in set(self.game_map.actors) - {self.player}:
-            if entity.ai:
-                try:
-                    entity.ai.perform()
-                except exceptions.Impossible:
-                    pass  # Ignore impossible action exception from AI.
+    def handle_turns(self) -> None:
+        """Handle turn processing with energy system."""
+        entities = list(self.game_map.actors)  # Include the player and enemies
+
+        # Regenerate energy for all entities
+        for entity in entities:
+            if entity.is_alive:
+                entity.gain_energy(40)  # Regenerate 10 energy (adjust as needed)
+
+        print(entities)
+        # Process actions for entities with enough energy
+        for entity in entities:
+            print("Current turn: ", entity.name)
+            if entity.energy >= entity.energy_threshold:
+                if entity is self.player:
+                    # Player's action is driven by input, so break for the input loop
+                    break
+                else:
+                    # Enemies act automatically based on their AI
+                    action = entity.ai.perform()
+
+                    if action:
+                        print(f"{entity.name} performing {action}")
+                        self.perform_action(entity, action)
+
+        self.update_fov()
+
+    def perform_action(self, entity, action):
+        """Execute an action for any entity."""
+        try:
+            action.perform()
+            print(f"{entity.name} Energy before action: {entity.energy}")
+            entity.spend_energy(action.energy_cost)
+            print(f"{entity.name} Energy after action: {entity.energy}")
+        except exceptions.Impossible as exc:
+            self.message_log.add_message(exc.args[0], colors.impossible)
 
     def update_fov(self) -> None:
         """Recompute the visible area based on the players point of view."""

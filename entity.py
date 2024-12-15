@@ -132,7 +132,10 @@ class Actor(Entity):
         inventory: Inventory,
         level: Level,
         move_cooldown: float = 0.2,
-        spawn_type: SpawnType = SpawnType.SINGLE
+        spawn_type: SpawnType = SpawnType.SINGLE,
+        energy=100,
+        energy_threshold=50
+
     ):
         super().__init__(
             x=x,
@@ -160,10 +163,26 @@ class Actor(Entity):
         self.level = level
         self.level.parent = self
 
+        self.energy = energy
+        self.energy_threshold = energy_threshold
+
     @property
     def is_alive(self) -> bool:
         """Returns True as long as this actor can perform actions."""
         return bool(self.ai)
+
+    def gain_energy(self, amount):
+        """Regain energy each turn"""
+        self.energy += amount
+        if self.energy > 100:  # Cap max energy if necessary
+            self.energy = 100
+
+    def spend_energy(self, amount):
+        """Spend energy when performing actions"""
+        self.energy -= amount
+        if self.energy < 0:
+            self.energy = 0
+
 
 
 class Item(Entity):

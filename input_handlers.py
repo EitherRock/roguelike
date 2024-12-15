@@ -130,35 +130,81 @@ class EventHandler(BaseEventHandler):
 
         if isinstance(action_or_state, BaseEventHandler):
             return action_or_state
+
         if self.handle_action(action_or_state):
-            # A valid action was performed.
+            # Check if the player is dead or needs to level up
             if not self.engine.player.is_alive:
-                # The player was killed sometime during or after the action.
                 return GameOverEventHandler(self.engine)
             elif self.engine.player.level.requires_level_up:
                 return LevelUpEventHandler(self.engine)
-            return MainGameEnventHandler(self.engine)  # Return to the main handler.
+            return MainGameEnventHandler(self.engine)  # Return to main handler
+
         return self
 
     def handle_action(self, action: Optional[Action]) -> bool:
-        """Handle actions returned from event methods.
-
-        Returns True if the action will advance a turn
-        """
-
+        """Handle actions returned from event methods."""
         if action is None:
             return False
 
         try:
-            action.perform()
+            print("Player energy before action:", self.engine.player.energy)
+            if self.engine.player.energy >= action.energy_cost:
+                action.perform()  # Perform the action
+                self.engine.player.spend_energy(action.energy_cost)
+                print("Player energy after action:", self.engine.player.energy)
         except exceptions.Impossible as exc:
             self.engine.message_log.add_message(exc.args[0], colors.impossible)
             return False
 
-        self.engine.handle_enemy_turns()
+        # After action, handle the enemy turns and update the game
+        self.engine.handle_turns()
 
         self.engine.update_fov()
         return True
+
+    # def handle_player_action(self):
+    #     """Handle player actions (e.g., movement, attack)"""
+    #     action = None
+    #     if self.engine.player.energy >= self.engine.player.energy_threshold:
+    #         # Allow the player to perform an action (move, attack, etc.)
+    #         action = self.get_player_input()  # This would call your method to handle player input (e.g., moving, attacking)
+    #     return action
+
+    # def handle_events(self, event: tcod.event.Event) -> BaseEventHandler:
+    #     """Handle events for input handlers with an engine."""
+    #     action_or_state = self.dispatch(event)
+    #
+    #     if isinstance(action_or_state, BaseEventHandler):
+    #         return action_or_state
+    #     if self.handle_action(action_or_state):
+    #         # A valid action was performed.
+    #         if not self.engine.player.is_alive:
+    #             # The player was killed sometime during or after the action.
+    #             return GameOverEventHandler(self.engine)
+    #         elif self.engine.player.level.requires_level_up:
+    #             return LevelUpEventHandler(self.engine)
+    #         return MainGameEnventHandler(self.engine)  # Return to the main handler.
+    #     return self
+    #
+    # def handle_action(self, action: Optional[Action]) -> bool:
+    #     """Handle actions returned from event methods.
+    #
+    #     Returns True if the action will advance a turn
+    #     """
+    #
+    #     if action is None:
+    #         return False
+    #
+    #     try:
+    #         action.perform()
+    #     except exceptions.Impossible as exc:
+    #         self.engine.message_log.add_message(exc.args[0], colors.impossible)
+    #         return False
+    #
+    #     self.engine.handle_enemy_turns()
+    #
+    #     self.engine.update_fov()
+    #     return True
 
     def ev_mousemotion(self, event: tcod.event.MoveMotion) -> None:
         if self.engine.game_map.in_bounds(event.tile.x, event.tile.y):
