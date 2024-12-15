@@ -1,7 +1,7 @@
 from components.ai import HostileEnemy
 from components import consumable, equippable
 from components.equipment import Equipment
-from components.fighter import Fighter
+from components.fighter import Fighter, Slime
 from components.inventory import Inventory
 from enums.spawn_types import SpawnType
 from components.level import Level
@@ -21,6 +21,42 @@ player = Actor(
     inventory=Inventory(capacity=26),
     level=Level(level_up_base=200),
     move_cooldown=.3
+)
+
+slime = Actor(
+    char="S",
+    color=(72, 230, 72),
+    name="Slime",
+    ai_cls=HostileEnemy,
+    equipment=Equipment(),
+    fighter=Slime(
+        hp=12,
+        base_defense=0,
+        base_power=3,
+        field_of_view=0,
+    ),
+    inventory=Inventory(capacity=1),
+    level=Level(xp_given=15),
+    move_cooldown=1,
+    spawn_type=SpawnType.SINGLE
+)
+
+small_slime = Actor(
+    char="s",
+    color=(72, 230, 72),
+    name="Small Slime",
+    ai_cls=HostileEnemy,
+    equipment=Equipment(),
+    fighter=Fighter(
+        hp=7,
+        base_defense=0,
+        base_power=3,
+        field_of_view=0,
+    ),
+    inventory=Inventory(capacity=1),
+    level=Level(xp_given=15),
+    move_cooldown=.8,
+    spawn_type=SpawnType.SINGLE
 )
 
 rat = Actor(

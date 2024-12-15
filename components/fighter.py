@@ -1,6 +1,7 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING, Optional, List
 import colors
+import entity_factories
 from components.base_component import BaseComponent
 from enums.damage_types import DamageType
 from enums.weapon_types import WeaponType
@@ -170,5 +171,69 @@ class Fighter(BaseComponent):
             self.engine.message_log.add_message(
                 f"{desc} for {amount} hit points.", attack_color
             )
+
+
+class Slime(Fighter):
+
+    def die(self) -> None:
+        small_slime = entity_factories.small_slime
+        valid_locations = self.find_valid_spawn_locations()
+
+        for i, (x, y) in enumerate(valid_locations):
+            if i >= 4:  # Spawn at most 4 slimes
+                break
+            small_slime.spawn(self.engine.game_map, x, y)
+
+        self.engine.message_log.add_message("SLIME IS DEAD", colors.red)
+        death_message = f"{self.parent.name} is dead!"
+        death_message_color = colors.enemy_die
+
+        for item in self.parent.inventory.items:
+            if item.name == "Key":
+                self.parent.inventory.drop(item)
+
+        self.parent.char = "%"
+        self.parent.color = (191, 0, 0)
+        self.parent.blocks_movement = False
+        self.parent.ai = None
+        self.parent.name = f"remains of {self.parent.name}"
+        self.parent.render_order = RenderOrder.CORPSE
+
+        self.engine.message_log.add_message(death_message, death_message_color)
+
+        self.engine.player.level.add_xp(self.parent.level.xp_given)
+
+    def find_valid_spawn_locations(self, radius: int = 2) -> list[tuple[int, int]]:
+        """Find valid spawn locations within a radius around the dying slime."""
+        slime_x, slime_y = self.parent.x, self.parent.y
+        game_map = self.engine.game_map
+
+        valid_locations = []
+
+        # Check all tiles within the given radius
+        for dx in range(-radius, radius + 1):
+            for dy in range(-radius, radius + 1):
+                x, y = slime_x + dx, slime_y + dy
+
+                # Skip the slime's own position
+                if dx == 0 and dy == 0:
+                    continue
+
+                # Check if the tile is within bounds
+                if not game_map.in_bounds(x, y):
+                    continue
+
+                # Check if the tile is walkable
+                if not game_map.tiles[x, y]["walkable"]:
+                    continue
+
+                # Check if the tile has an entity
+                if any(entity.x == x and entity.y == y for entity in game_map.entities):
+                    continue
+
+                # If all checks pass, this is a valid location
+                valid_locations.append((x, y))
+
+        return valid_locations
 
 
