@@ -364,9 +364,12 @@ class EnvironmentAction(Action):
         self.object = env_object
 
     def perform(self) -> None:
-        from gamemap.environment_objects import Door
+        from gamemap.environment_objects import Door, Stairs
         if isinstance(self.object, Door):
             action = DoorAction(self.object, self.entity)
+            return action.perform()
+        elif isinstance(self.object, Stairs):
+            action = TakeStairsAction(self.entity)
             return action.perform()
 
 

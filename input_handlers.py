@@ -173,14 +173,8 @@ class MainGameEnventHandler(EventHandler):
         action: Optional[Action] = None
 
         key = event.sym
-        modifier = event.mod
 
         player = self.engine.player
-
-        if key == tcod.event.KeySym.PERIOD and modifier & (
-            tcod.event.KMOD_LSHIFT | tcod.event.KMOD_RSHIFT
-        ):
-            return actions.TakeStairsAction(player)
 
         if key in MOVE_KEYS:
             dx, dy = MOVE_KEYS[key]
@@ -657,6 +651,7 @@ class EnvironmentObjectSelection(AskUserEventHandler):
             (self.player.x, self.player.y + 1),  # South
             (self.player.x - 1, self.player.y),  # West
             (self.player.x + 1, self.player.y),  # East
+            (self.player.x, self.player.y),      # Players position
         ]
 
         for pos in adjacent_positions:

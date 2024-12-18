@@ -331,6 +331,7 @@ def generate_dungeon(
             # The first room, where the player starts.
             player.place(*new_room.center, gamemap=dungeon)
             upstairs = Stairs(*new_room.center, gamemap=dungeon, direction="up")
+            dungeon.environment_objects[(upstairs.x, upstairs.y)] = upstairs
             dungeon.upstairs_location = (upstairs.x, upstairs.y)
             # dungeon.tiles[dungeon.upstairs_location] = upstairs.tile
 
@@ -343,9 +344,13 @@ def generate_dungeon(
 
             center_of_last_room = new_room.center
 
+        # Create downstairs environment object and store it in the dungeons environment objs list
         downstairs = Stairs(*center_of_last_room, gamemap=dungeon, direction="down")
+        dungeon.environment_objects[(downstairs.x, downstairs.y)] = downstairs
+
         dungeon.tiles[center_of_last_room] = downstairs.tile
         dungeon.downstairs_location = (downstairs.x, downstairs.y)
+
         dungeon.tiles[dungeon.upstairs_location] = upstairs.tile
 
         # Finally, append the new room to the list.
@@ -404,7 +409,7 @@ def find_and_mark_doors(
     from entity import Actor
     keys = []
     for room in rooms:
-        print(room.room_id)
+
         room_bounds = {
             (x, y)
             for x in range(room.x1 + 1, room.x2)
