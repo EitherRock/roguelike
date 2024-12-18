@@ -1,6 +1,6 @@
 from __future__ import annotations
 from typing import Tuple, TYPE_CHECKING
-from gamemap.tile_types import closed_door, open_door, locked_door
+from gamemap.tile_types import closed_door, open_door, locked_door, up_stairs, down_stairs
 import colors
 
 
@@ -15,14 +15,15 @@ class EnvironmentObject:
         self.y = y
         self.gamemap = gamemap  # Reference to the GameMap this object belongs to
 
-    def interact(self) -> None:
-        """Define what happens when the object is interacted with."""
-        raise NotImplementedError()
-
     @property
     def position(self) -> Tuple[int, int]:
         """Return the (x, y) position of the object."""
         return self.x, self.y
+
+    @property
+    def tile(self):
+        """Return the tile type for this environment object."""
+        raise NotImplementedError("Subclasses must implement the `tile` property.")
 
 
 class Door(EnvironmentObject):
@@ -73,4 +74,21 @@ class Door(EnvironmentObject):
         """Update the game map tile to reflect the door's state."""
         self.gamemap.tiles[self.x, self.y] = self.tile
 
+
+class Stairs(EnvironmentObject):
+    """A generalized class to represent stairs, either up or down."""
+
+    def __init__(self, x: int, y: int, gamemap: GameMap, direction: str):
+        """
+        :param direction: "up" for upstairs, "down" for downstairs.
+        """
+        super().__init__(x, y, gamemap)
+        if direction not in {"up", "down"}:
+            raise ValueError("Direction must be either 'up' or 'down'.")
+        self.direction = direction
+
+    @property
+    def tile(self):
+        """Return the tile type based on the direction."""
+        return up_stairs if self.direction == "up" else down_stairs
 

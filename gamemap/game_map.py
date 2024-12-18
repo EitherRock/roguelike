@@ -30,7 +30,8 @@ class GameMap:
             (width, height), fill_value=False, order="F"
         )  # Tiles the player has seen before
 
-        self.downstairs_location = (0, 0)
+        # self.downstairs_location = (0, 0)
+        self.downstairs_location = Tuple[int, int]
         self.upstairs_location = None
         self.environment_objects: Dict[Tuple[int, int], EnvironmentObject] = {}
         self.keys: List[Key] = []
