@@ -6,7 +6,7 @@ from typing import Dict, Iterator, List, Tuple, TYPE_CHECKING
 import tcod
 import entity_factories
 from gamemap.game_map import GameMap
-from gamemap.environment_objects import Door
+from gamemap.environment_objects import Door, Stairs
 from gamemap import tile_types
 from enums.spawn_types import SpawnType
 from enums.room_types import RoomType
@@ -299,6 +299,8 @@ def generate_dungeon(
     center_of_last_room = (0, 0)
     room_num = 0
     floor_num = engine.game_world.current_floor
+    upstairs: Stairs
+    downstairs: Stairs
 
     for r in range(max_rooms):
         room_num += 1
@@ -328,7 +330,10 @@ def generate_dungeon(
         if len(rooms) == 0:
             # The first room, where the player starts.
             player.place(*new_room.center, gamemap=dungeon)
-            dungeon.upstairs_location = new_room.center
+            upstairs = Stairs(*new_room.center, gamemap=dungeon, direction="up")
+            dungeon.environment_objects[(upstairs.x, upstairs.y)] = upstairs
+            dungeon.upstairs_location = (upstairs.x, upstairs.y)
+            # dungeon.tiles[dungeon.upstairs_location] = upstairs.tile
 
         else:  # All rooms after the first.
             # Dig out a tunnel between this room and the previous one.
@@ -339,9 +344,14 @@ def generate_dungeon(
 
             center_of_last_room = new_room.center
 
-        dungeon.tiles[center_of_last_room] = tile_types.down_stairs
-        dungeon.downstairs_location = center_of_last_room
-        dungeon.tiles[dungeon.upstairs_location] = tile_types.up_stairs
+        # Create downstairs environment object and store it in the dungeons environment objs list
+        downstairs = Stairs(*center_of_last_room, gamemap=dungeon, direction="down")
+        dungeon.environment_objects[(downstairs.x, downstairs.y)] = downstairs
+
+        dungeon.tiles[center_of_last_room] = downstairs.tile
+        dungeon.downstairs_location = (downstairs.x, downstairs.y)
+
+        dungeon.tiles[dungeon.upstairs_location] = upstairs.tile
 
         # Finally, append the new room to the list.
         rooms.append(new_room)
@@ -399,7 +409,7 @@ def find_and_mark_doors(
     from entity import Actor
     keys = []
     for room in rooms:
-        print(room.room_id)
+
         room_bounds = {
             (x, y)
             for x in range(room.x1 + 1, room.x2)

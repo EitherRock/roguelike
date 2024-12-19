@@ -5,7 +5,7 @@ from tcod.console import Console
 from entity import Actor, Item
 from gamemap import tile_types
 import colors
-from gamemap.environment_objects import EnvironmentObject
+from gamemap.environment_objects import EnvironmentObject, Stairs
 from components.consumable import Key
 
 if TYPE_CHECKING:
@@ -30,7 +30,8 @@ class GameMap:
             (width, height), fill_value=False, order="F"
         )  # Tiles the player has seen before
 
-        self.downstairs_location = (0, 0)
+        # self.downstairs_location = (0, 0)
+        self.downstairs_location = Tuple[int, int]
         self.upstairs_location = None
         self.environment_objects: Dict[Tuple[int, int], EnvironmentObject] = {}
         self.keys: List[Key] = []
@@ -234,7 +235,9 @@ class OverWorld:
             order='F',
         )
 
-        world.tiles[dungeon_entrance] = tile_types.down_stairs
+        downstairs = Stairs(*dungeon_entrance, gamemap=world, direction="down")
+        world.environment_objects[(downstairs.x, downstairs.y)] = downstairs
+        world.tiles[dungeon_entrance] = downstairs.tile
         world.downstairs_location = dungeon_entrance
 
         self.engine.game_map = world
