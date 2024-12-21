@@ -52,6 +52,8 @@ locked_room_item_chances: Dict[int, List[Tuple[Entity, int]]] = {
         (armor_factory.chain_mail, 1),
         (weapon_factory.arrow, 15),
         (weapon_factory.rock, 30),
+        (armor_factory.boots, 30),
+        (armor_factory.helmet, 20)
     ],
 }
 
@@ -61,7 +63,9 @@ item_chances: Dict[int, List[Tuple[Entity, int]]] = {
         (weapon_factory.bow, 5),
         (weapon_factory.arrow, 15),
         (weapon_factory.rock, 30),
-        (item_factory.firebolt_scroll, 100)
+        (item_factory.firebolt_scroll, 100),
+        (armor_factory.boots, 50),
+        (armor_factory.helmet, 50)
     ],
     2: [
         (item_factory.confusion_scroll, 10),

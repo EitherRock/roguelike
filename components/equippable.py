@@ -140,12 +140,22 @@ class Club(Weapon):
 
 class LeatherArmor(Equippable):
     def __init__(self) -> None:
-        super().__init__(equipment_type=EquipmentType.ARMOR, defense_bonus=1)
+        super().__init__(equipment_type=EquipmentType.CHEST, defense_bonus=1)
 
 
 class ChainMail(Equippable):
     def __init__(self) -> None:
-        super().__init__(equipment_type=EquipmentType.ARMOR, defense_bonus=3)
+        super().__init__(equipment_type=EquipmentType.CHEST, defense_bonus=3)
+
+
+class Helmet(Equippable):
+    def __init__(self) -> None:
+        super().__init__(equipment_type=EquipmentType.HEAD, defense_bonus=1)
+
+
+class Boots(Equippable):
+    def __init__(self) -> None:
+        super().__init__(equipment_type=EquipmentType.BOOTS, defense_bonus=1)
 
 
 class Lantern(Equippable):

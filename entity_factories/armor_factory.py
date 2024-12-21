@@ -12,3 +12,11 @@ leather_armor = Item(
 chain_mail = Item(
     char="[", color=(139, 69, 19), name="Chain Mail", equippable=equippable.ChainMail()
 )
+
+helmet = Item(
+    char="[", color=(139, 69, 19), name="Helmet", equippable=equippable.Helmet()
+)
+
+boots = Item(
+    char="[", color=(139, 69, 19), name="Boots", equippable=equippable.Boots()
+)
