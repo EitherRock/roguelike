@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING, Optional, List
 import colors
-import entity_factories
+from entity_factories import monster_factory
 from components.base_component import BaseComponent
 from enums.damage_types import DamageType
 from enums.weapon_types import WeaponType
@@ -176,7 +176,7 @@ class Fighter(BaseComponent):
 class Slime(Fighter):
 
     def die(self) -> None:
-        small_slime = entity_factories.small_slime
+        small_slime = monster_factory.small_slime
         valid_locations = self.find_valid_spawn_locations()
 
         for i, (x, y) in enumerate(valid_locations):

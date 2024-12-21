@@ -8,7 +8,7 @@ from typing import Optional
 import tcod
 import colors
 from engine import Engine
-import entity_factories
+from entity_factories import weapon_factory, armor_factory, item_factory, monster_factory
 from gamemap.game_map import DungeonWorld, OverWorld
 import input_handlers
 from tcod import libtcodpy
@@ -28,7 +28,8 @@ def new_game() -> Engine:
     room_min_size = 6
     max_rooms = 30
 
-    player = copy.deepcopy(entity_factories.player)
+    # player = copy.deepcopy(entity_factories.player)
+    player = copy.deepcopy(monster_factory.player)
 
     engine = Engine(player=player)
     engine.game_worlds["dungeon"] = DungeonWorld(
@@ -56,10 +57,15 @@ def new_game() -> Engine:
         "Hello and welcome, adventurer, to the dungeon!", colors.welcome_text
     )
 
-    dagger = copy.deepcopy(entity_factories.dagger)
-    club = copy.deepcopy(entity_factories.club)
-    leather_armor = copy.deepcopy(entity_factories.leather_armor)
-    lantern = copy.deepcopy(entity_factories.lantern)
+    # dagger = copy.deepcopy(entity_factories.dagger)
+    # club = copy.deepcopy(entity_factories.club)
+    # leather_armor = copy.deepcopy(entity_factories.leather_armor)
+    # lantern = copy.deepcopy(entity_factories.lantern)
+
+    dagger = copy.deepcopy(weapon_factory.dagger)
+    club = copy.deepcopy(weapon_factory.club)
+    leather_armor = copy.deepcopy(armor_factory.leather_armor)
+    lantern = copy.deepcopy(item_factory.lantern)
 
     dagger.parent = player.inventory
     club.parent = player.inventory

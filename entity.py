@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from components.inventory import Inventory
     from components.level import Level
     from gamemap.game_map import GameMap
-    from entity_factories import weapon_factory
+    from entity_factories.weapon_factory import weapon_factory
 
 T = TypeVar("T", bound="Entity")
 
@@ -83,7 +83,7 @@ class Entity:
         return clone
 
     def add_weapon(self, clone, weapon_choice) -> None:
-        from entity_factories import weapon_factory
+        from entity_factories.weapon_factory import weapon_factory
         if weapon_choice in weapon_factory:
             weapon = copy.deepcopy(weapon_factory.get(weapon_choice))
             if weapon:
