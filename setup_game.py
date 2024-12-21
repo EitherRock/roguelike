@@ -12,10 +12,11 @@ import entity_factories
 from gamemap.game_map import DungeonWorld, OverWorld
 import input_handlers
 from tcod import libtcodpy
+from util import resource_path
 
 
 # Load the background image and remove the apha channel.
-background_image = tcod.image.load("menu_background.png")[:, :, :3]
+background_image = tcod.image.load(resource_path("menu_background.png"))[:, :, :3]
 
 
 def new_game() -> Engine:
