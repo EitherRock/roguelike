@@ -34,91 +34,75 @@ class Equipment(BaseComponent):
         self.utility = utility
         self.ammo = ammo
 
+    def _calculate_bonus(self, bonus_type: str) -> int:
+        """Generic method to calculate bonuses based on the specified type."""
+        bonus = 0
+
+        # Map equipment slots to their attributes
+        equipment_slots = {
+            "weapon": self.weapon,
+            "ranged_weapon": self.ranged_weapon,
+            "head": self.head,
+            "chest": self.chest,
+            "boots": self.boots,
+            "armor": self.armor,
+            "utility": self.utility,
+            "ammo": self.ammo,
+        }
+
+        # Bonus mapping for quality attributes
+        attribute_bonus_map = {
+            "Defence": "defense_bonus",
+            "Melee DMG": "melee_bonus",
+            "Ranged DMG": "range_dmg_bonus",
+            "Ranged Dist": "range_dist_bonus",
+        }
+
+        # Iterate through equipment and sum up the bonuses
+        for item in equipment_slots.values():
+            if item and item.equippable:
+                bonus += getattr(item.equippable, bonus_type, 0)
+
+                # Add bonuses from quality attributes
+                if hasattr(item.equippable, "attributes"):
+                    attributes = getattr(item.equippable, "attributes", [])
+                    if not isinstance(attributes, list):
+                        attributes = []
+
+                    for attribute in attributes:
+                        # Match the attribute to its corresponding bonus type
+                        mapped_bonus = attribute_bonus_map.get(attribute)
+
+                        if mapped_bonus == bonus_type:
+                            # Add an additional fixed value or derived value (e.g., +2 per attribute)
+                            bonus += 2  # Adjust this value based on your design
+        return bonus
+
     @property
     def damage_type(self) -> Optional[DamageType]:
         from components.equippable import Weapon
+
         if self.weapon and isinstance(self.weapon, Weapon):
             return self.weapon.damage_type
         elif self.ranged_weapon and isinstance(self.ranged_weapon, Weapon):
             return self.ranged_weapon.damage_type
+        return None
 
     @property
     def defence_bonus(self) -> int:
-        bonus = 0
-
-        if self.weapon is not None and self.weapon.equippable is not None:
-            bonus += self.weapon.equippable.defense_bonus
-        if self.ranged_weapon is not None and self.ranged_weapon.equippable is not None:
-            bonus += self.ranged_weapon.equippable.defense_bonus
-        if self.head is not None and self.head.equippable is not None:
-            bonus += self.head.equippable.defense_bonus
-        if self.chest is not None and self.chest.equippable is not None:
-            bonus += self.chest.equippable.defense_bonus
-        if self.boots is not None and self.boots.equippable is not None:
-            bonus += self.boots.equippable.defense_bonus
-
-        return bonus
+        return self._calculate_bonus("defense_bonus")
 
     @property
     def melee_bonus(self) -> int:
-        bonus = 0
-
-        if self.weapon is not None and self.weapon.equippable is not None:
-            bonus += self.weapon.equippable.melee_bonus
-        if self.ranged_weapon is not None and self.ranged_weapon.equippable is not None:
-            bonus += self.ranged_weapon.equippable.melee_bonus
-        if self.utility is not None and self.utility.equippable is not None:
-            bonus += self.utility.equippable.melee_bonus
-        if self.head is not None and self.head.equippable is not None:
-            bonus += self.head.equippable.melee_bonus
-        if self.chest is not None and self.chest.equippable is not None:
-            bonus += self.chest.equippable.melee_bonus
-        if self.boots is not None and self.boots.equippable is not None:
-            bonus += self.boots.equippable.melee_bonus
-
-        return bonus
+        return self._calculate_bonus("melee_bonus")
 
     @property
     def range_dmg_bonus(self) -> int:
-        bonus = 0
-
-        if self.ranged_weapon is not None and self.ranged_weapon.equippable is not None:
-            bonus += self.ranged_weapon.equippable.range_dmg_bonus
-        if self.weapon is not None and self.weapon.equippable is not None:
-            bonus += self.weapon.equippable.range_dmg_bonus
-        if self.ammo is not None and self.ammo.equippable is not None:
-            bonus += self.ammo.equippable.range_dmg_bonus
-        if self.head is not None and self.head.equippable is not None:
-            bonus += self.head.equippable.range_dmg_bonus
-        if self.chest is not None and self.chest.equippable is not None:
-            bonus += self.chest.equippable.range_dmg_bonus
-        if self.boots is not None and self.boots.equippable is not None:
-            bonus += self.boots.equippable.range_dmg_bonus
-        if self.utility is not None and self.utility.equippable is not None:
-            bonus += self.utility.equippable.range_dmg_bonus
-
-        return bonus
+        return self._calculate_bonus("range_dmg_bonus")
 
     @property
     def range_dist_bonus(self) -> int:
-        bonus = 0
-
-        if self.ranged_weapon is not None and self.ranged_weapon.equippable is not None:
-            bonus += self.ranged_weapon.equippable.range_dist_bonus
-        if self.weapon is not None and self.weapon.equippable is not None:
-            bonus += self.weapon.equippable.range_dist_bonus
-        if self.ammo is not None and self.ammo.equippable is not None:
-            bonus += self.ammo.equippable.range_dist_bonus
-        if self.head is not None and self.head.equippable is not None:
-            bonus += self.head.equippable.range_dist_bonus
-        if self.chest is not None and self.chest.equippable is not None:
-            bonus += self.chest.equippable.range_dist_bonus
-        if self.boots is not None and self.boots.equippable is not None:
-            bonus += self.boots.equippable.range_dist_bonus
-        if self.utility is not None and self.utility.equippable is not None:
-            bonus += self.utility.equippable.range_dist_bonus
-
-        return bonus
+        return self._calculate_bonus("range_dist_bonus")
 
     @property
     def fov_bonus(self) -> int:

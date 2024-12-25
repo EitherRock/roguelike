@@ -24,5 +24,12 @@ bar_text = white
 bar_filled = (0x0, 0x60, 0x0)
 bar_empty = (0x40, 0x10, 0x10)
 
+# Menu
 menu_title = (255, 255, 63)
 menu_text = white
+
+# Quality
+common = white
+uncommon = (0, 255, 0)
+rare = (30, 144, 255)
+legendary = (138, 43, 226)

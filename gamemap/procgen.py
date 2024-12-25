@@ -11,6 +11,8 @@ from gamemap import tile_types
 from enums.spawn_types import SpawnType
 from enums.room_types import RoomType
 from components.consumable import Key
+from components.equippable import Weapon, Unarmed, UnarmedRanged
+from components.quality import get_random_quality
 
 
 if TYPE_CHECKING:
@@ -19,7 +21,7 @@ if TYPE_CHECKING:
 
 
 max_items_by_floor = [
-    (1, 1),  # test value
+    (1, 10),  # test value
     (4, 2),
     (10, 3),
     (25, 4)
@@ -65,7 +67,9 @@ item_chances: Dict[int, List[Tuple[Entity, int]]] = {
         (weapon_factory.rock, 30),
         (item_factory.firebolt_scroll, 100),
         (armor_factory.boots, 50),
-        (armor_factory.helmet, 50)
+        (armor_factory.helmet, 50),
+        (weapon_factory.dagger, 1000),
+        (weapon_factory.club, 800)
     ],
     2: [
         (item_factory.confusion_scroll, 10),

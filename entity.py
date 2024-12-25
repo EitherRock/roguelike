@@ -5,6 +5,8 @@ import random
 import time
 from typing import Optional, Tuple, Type, TypeVar, TYPE_CHECKING, Union
 from enums.spawn_types import SpawnType
+from components.equippable import Weapon, Unarmed, UnarmedRanged
+from components.quality import get_random_quality
 
 from enums.render_order import RenderOrder
 
@@ -61,7 +63,7 @@ class Entity:
     def gamemap(self) -> GameMap:
         return self.parent.gamemap
 
-    def spawn(self: T, gamemap: GameMap, x: int, y: int) -> T:
+    def spawn(self: T, gamemap: GameMap, x: int, y: int, floor_number: int = 0) -> T:
         """Spawn a copy of this instance at the given location."""
         from components.fighter import Fighter
 
@@ -78,6 +80,11 @@ class Entity:
         if isinstance(clone, Item):
             if clone.equippable and hasattr(clone.equippable, "quantity"):
                 clone.equippable.quantity = clone.equippable.random_quantity()
+
+            if clone.equippable and hasattr(clone.equippable, "quality"):
+                if not isinstance(clone.equippable, Unarmed) or not isinstance(clone.equippable, UnarmedRanged):
+                    clone.equippable.quality = get_random_quality(floor_number)
+                    clone.color = clone.equippable.quality.color
 
         gamemap.entities.add(clone)
         return clone

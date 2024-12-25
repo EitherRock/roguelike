@@ -13,6 +13,7 @@ from gamemap.game_map import DungeonWorld, OverWorld
 import input_handlers
 from tcod import libtcodpy
 from util import resource_path
+from components.quality import get_random_quality
 
 
 # Load the background image and remove the apha channel.
@@ -28,7 +29,6 @@ def new_game() -> Engine:
     room_min_size = 6
     max_rooms = 30
 
-    # player = copy.deepcopy(entity_factories.player)
     player = copy.deepcopy(monster_factory.player)
 
     engine = Engine(player=player)
@@ -50,22 +50,23 @@ def new_game() -> Engine:
     engine.switch_maps("world")
     engine.game_world = engine.active_map
 
-    # engine.game_world.generate_floor()
     engine.game_world.generate()
 
     engine.message_log.add_message(
         "Hello and welcome, adventurer, to the dungeon!", colors.welcome_text
     )
 
-    # dagger = copy.deepcopy(entity_factories.dagger)
-    # club = copy.deepcopy(entity_factories.club)
-    # leather_armor = copy.deepcopy(entity_factories.leather_armor)
-    # lantern = copy.deepcopy(entity_factories.lantern)
-
     dagger = copy.deepcopy(weapon_factory.dagger)
     club = copy.deepcopy(weapon_factory.club)
     leather_armor = copy.deepcopy(armor_factory.leather_armor)
     lantern = copy.deepcopy(item_factory.lantern)
+
+    leather_armor.equippable.quality = get_random_quality(1)
+    dagger.equippable.quality = get_random_quality(1)
+    club.equippable.quality = get_random_quality(1)
+    print(club.equippable.attributes)
+    print(dagger.equippable.attributes)
+    print(leather_armor.equippable.attributes)
 
     dagger.parent = player.inventory
     club.parent = player.inventory
