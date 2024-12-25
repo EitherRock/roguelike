@@ -14,7 +14,7 @@ class Quality:
     def generate_attributes(self):
         """Randomly generate attributes based on the maximum allowed."""
         all_attributes = [
-            # "Health",
+            "Health",
             "Defence",
             # "Hit Chance",
             # "Dodge Chance",

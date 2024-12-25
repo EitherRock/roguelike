@@ -26,26 +26,39 @@ rock = Item(
     )
 )
 
-dagger = Item(char="/", color=(0, 191, 255), name="Dagger", equippable=equippable.Dagger())
+dagger = Item(char="/", name="Dagger", equippable=equippable.Dagger())
 
-sword = Item(char="/", color=(0, 191, 255), name="Sword", equippable=equippable.Sword())
+sword = Item(char="/", name="Sword", equippable=equippable.Sword())
 
-club = Item(char="/", color=(0, 191, 255), name="Club", equippable=equippable.Club())
+long_sword = Item(
+    char="/",
+    name="Long Sword",
+    equippable=equippable.Sword(melee_dmg=6)
+)
+
+club = Item(char="/", name="Club", equippable=equippable.Club())
 
 unarmed = Item(char="/", color=(0, 191, 255), name="Unarmed", equippable=equippable.Unarmed())
 
 bow = Item(
     char="/",
-    color=(0, 191, 255),
     name="Bow",
-    equippable=equippable.Bow(ammo_type=AmmoType.ARROW, range_dmg_bonus=2, range_dist_bonus=2)
+    equippable=equippable.Bow(
+        ammo_type=AmmoType.ARROW,
+        range_dmg_bonus=2,
+        range_dist_bonus=2
+    )
 )
 
 long_bow = Item(
     char="/",
     color=(80, 191, 255),
     name="Long Bow",
-    equippable=equippable.Bow(ammo_type=AmmoType.ARROW, range_dmg_bonus=4, range_dist_bonus=4)
+    equippable=equippable.Bow(
+        ammo_type=AmmoType.ARROW,
+        range_dmg_bonus=4,
+        range_dist_bonus=4
+    )
 )
 
 weapon_factory = {

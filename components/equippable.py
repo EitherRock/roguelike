@@ -137,29 +137,30 @@ class Dagger(Weapon):
     def __init__(
             self,
             quality: Quality = None,
+            melee_dmg: int = 2
     ) -> None:
         super().__init__(
             weapon_range=WeaponDistanceType.MELEE,
             weapon_type=WeaponType.DAGGER,
             damage_type=DamageType.SLASHING,
-            melee_bonus=2,
+            melee_bonus=melee_dmg,
             quality=quality
         )
 
 
 class Sword(Weapon):
-    def __init__(self, quality: Quality = None) -> None:
+    def __init__(self, quality: Quality = None, melee_dmg: int = 4) -> None:
         super().__init__(
             weapon_range=WeaponDistanceType.MELEE,
             weapon_type=WeaponType.SWORD,
             damage_type=DamageType.SLASHING,
-            melee_bonus=4,
+            melee_bonus=melee_dmg,
             quality=quality
         )
 
 
 class Club(Weapon):
-    def __init__(self, quality: Quality = None) -> None:
+    def __init__(self, quality: Quality = None, melee_dmg: int = 4) -> None:
         super().__init__(
             weapon_range=WeaponDistanceType.MELEE,
             weapon_type=WeaponType.CLUB,

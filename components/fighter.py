@@ -26,7 +26,7 @@ class Fighter(BaseComponent):
             field_of_view: Optional[int] = None,
             flying: bool = False
     ):
-        self.max_hp = hp
+        self.base_max_hp = hp
         self._hp = hp
         self.base_defense = base_defense
         self.base_power = base_power
@@ -47,6 +47,10 @@ class Fighter(BaseComponent):
     @property
     def hp(self) -> int:
         return self._hp
+
+    @property
+    def max_hp(self) -> int:
+        return self.base_max_hp + self.health_bonus
 
     @hp.setter
     def hp(self, value: int) -> None:
@@ -106,6 +110,13 @@ class Fighter(BaseComponent):
     def fov_bonus(self) -> int:
         if self.parent.equipment:
             return self.parent.equipment.fov_bonus
+        else:
+            return 0
+
+    @property
+    def health_bonus(self) -> int:
+        if self.parent.equipment:
+            return self.parent.equipment.health_bonus
         else:
             return 0
 

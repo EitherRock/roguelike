@@ -56,6 +56,7 @@ class Equipment(BaseComponent):
             "Melee DMG": "melee_bonus",
             "Ranged DMG": "range_dmg_bonus",
             "Ranged Dist": "range_dist_bonus",
+            "Health": "health_bonus"
         }
 
         # Iterate through equipment and sum up the bonuses
@@ -91,6 +92,10 @@ class Equipment(BaseComponent):
     @property
     def defence_bonus(self) -> int:
         return self._calculate_bonus("defense_bonus")
+
+    @property
+    def health_bonus(self):
+        return self._calculate_bonus("health_bonus")
 
     @property
     def melee_bonus(self) -> int:
