@@ -56,7 +56,10 @@ class Equipment(BaseComponent):
             "Melee DMG": "melee_bonus",
             "Ranged DMG": "range_dmg_bonus",
             "Ranged Dist": "range_dist_bonus",
-            "Health": "health_bonus"
+            "Health": "health_bonus",
+            "Critical DMG": "critical_multiplier_bonus",
+            "Critical Hit Chance": "critical_chance_bonus"
+
         }
 
         # Iterate through equipment and sum up the bonuses
@@ -76,7 +79,10 @@ class Equipment(BaseComponent):
 
                         if mapped_bonus == bonus_type:
                             # Add an additional fixed value or derived value (e.g., +2 per attribute)
-                            bonus += 2  # Adjust this value based on your design
+                            if mapped_bonus == "Critical Hit Chance":  # fix this later, shouldn't be hardcoded here
+                                bonus += .05
+                            else:
+                                bonus += 2  # Adjust this value based on your design
         return bonus
 
     @property
@@ -117,6 +123,14 @@ class Equipment(BaseComponent):
             bonus += self.utility.equippable.fov_bonus
 
         return bonus
+
+    @property
+    def critical_multiplier_bonus(self) -> float:
+        return self._calculate_bonus("critical_multiplier_bonus")
+
+    @property
+    def critical_chance_bonus(self) -> float:
+        return self._calculate_bonus("critical_chance_bonus")
 
     def item_is_equipped(self, item: Item) -> bool:
         return self.weapon == item \

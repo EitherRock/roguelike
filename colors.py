@@ -30,6 +30,6 @@ menu_text = white
 
 # Quality
 common = white
-uncommon = (0, 255, 0)
+uncommon = (0, 230, 0)
 rare = (30, 144, 255)
 legendary = (138, 43, 226)

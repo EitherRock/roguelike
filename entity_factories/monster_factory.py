@@ -22,7 +22,7 @@ player = Actor(
 
 slime = Actor(
     char="S",
-    color=(72, 230, 72),
+    color=(72, 200, 72),
     name="Slime",
     ai_cls=HostileEnemy,
     equipment=Equipment(),

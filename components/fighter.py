@@ -1,4 +1,5 @@
 from __future__ import annotations
+import random
 from typing import TYPE_CHECKING, Optional, List
 import colors
 from entity_factories import monster_factory
@@ -24,7 +25,9 @@ class Fighter(BaseComponent):
             immunities: Optional[List[DamageType]] = None,
             allowed_weapon_types: Optional[List[WeaponType]] = None,
             field_of_view: Optional[int] = None,
-            flying: bool = False
+            flying: bool = False,
+            critical_chance: float = 0.1,
+            critical_multiplier: float = 1.5
     ):
         self.base_max_hp = hp
         self._hp = hp
@@ -36,6 +39,8 @@ class Fighter(BaseComponent):
         self.resistances = resistances or []
         self.immunities = immunities or []
         self._allowed_weapon_types = allowed_weapon_types or []
+        self.base_critical_chance = critical_chance
+        self.base_critical_multiplier = critical_multiplier
 
     @property
     def allowed_weapon_types(self) -> List[WeaponType]:
@@ -79,10 +84,32 @@ class Fighter(BaseComponent):
         return self.base_attack_range + self.rang_dist_bonus
 
     @property
+    def critical_chance(self) -> float:
+        return self.base_critical_chance + self.critical_chance_bonus
+
+    @property
+    def critical_multiplier(self) -> float:
+        return self.base_critical_multiplier + self.critical_multiplier_bonus
+
+    @property
     def defense_bonus(self) -> int:
         bonus = 0
         if self.parent.equipment:
             bonus += self.parent.equipment.defence_bonus
+        return bonus
+
+    @property
+    def critical_chance_bonus(self) -> float:
+        bonus = 0
+        if self.parent.equipment:
+            bonus += self.parent.equipment.critical_chance_bonus
+        return bonus
+
+    @property
+    def critical_multiplier_bonus(self) -> float:
+        bonus = 0
+        if self.parent.equipment:
+            bonus += self.parent.equipment.critical_multiplier_bonus
         return bonus
 
     @property
@@ -164,8 +191,16 @@ class Fighter(BaseComponent):
         else:
             attack_color = colors.enemy_atk
 
+        # Didja get a crit?
+        crit = random.random() < self.critical_chance
+
         if damage_type in self.resistances:
             amount = amount // 2
+
+            if crit:
+                self.engine.message_log.add_message("CRIT!", attack_color)
+                amount *= self.critical_multiplier
+
             self.hp -= max(0, int(amount))
             self.engine.message_log.add_message(
                 f"{desc} but {self.parent.name} is RESISTANT to {damage_type.name} and only takes {amount} damage.",
@@ -178,6 +213,10 @@ class Fighter(BaseComponent):
                     attack_color
                 )
         else:
+            if crit:
+                self.engine.message_log.add_message("CRIT!", attack_color)
+                amount *= self.critical_multiplier
+
             self.hp -= max(0, int(amount))
             self.engine.message_log.add_message(
                 f"{desc} for {amount} hit points.", attack_color

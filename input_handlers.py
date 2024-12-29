@@ -262,7 +262,7 @@ class CharacterScreenEventHandler(AskUserEventHandler):
             x=x,
             y=y,
             width=width,
-            height=10,
+            height=13,
             title=self.TITLE,
             clear=True,
             fg=(255, 255, 255),
@@ -285,10 +285,19 @@ class CharacterScreenEventHandler(AskUserEventHandler):
             x=x + 1, y=y + 5, string=f"Melee Dmg: {self.engine.player.fighter.melee_power}"
         )
         console.print(
-            x=x + 1, y=y + 6, string=f"Ranged Dmg: {self.engine.player.fighter.range_power}"
+            x=x + 1, y=y + 6, string=f"Ranged Dist: {self.engine.player.fighter.ranged_attack_range}"
         )
         console.print(
-            x=x + 1, y=y + 7, string=f"Defense: {self.engine.player.fighter.defense}"
+            x=x + 1, y=y + 7, string=f"Ranged Dmg: {self.engine.player.fighter.range_power}"
+        )
+        console.print(
+            x=x + 1, y=y + 8, string=f"Defense: {self.engine.player.fighter.defense}"
+        )
+        console.print(
+            x=x + 1, y=y + 9, string=f"Crit Dmg: {self.engine.player.fighter.critical_multiplier}"
+        )
+        console.print(
+            x=x + 1, y=y + 10, string=f"Crit Chance: {self.engine.player.fighter.critical_chance:.0%}"
         )
 
 

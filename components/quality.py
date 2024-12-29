@@ -18,8 +18,8 @@ class Quality:
             "Defence",
             # "Hit Chance",
             # "Dodge Chance",
-            # "Critical DMG",
-            # "Critical Hit Chance",
+            "Critical DMG",
+            "Critical Hit Chance",
             # "Move Cooldown",
             "Melee DMG",
             "Ranged DMG",
@@ -59,8 +59,7 @@ class Legendary(Quality):
 
 
 quality_chances: Dict[int, List[Tuple[Quality, int]]] = {
-    # 0: [(Common(), 100), (Uncommon(), 50), (Rare(), 20), (Legendary(), 5)],
-    0: [(Common(), 100), (Uncommon(), 1000), (Rare(), 100), (Legendary(), 100)],
+    0: [(Common(), 100), (Uncommon(), 50), (Rare(), 20), (Legendary(), 5)],
     1: [(Common(), 80), (Uncommon(), 60), (Rare(), 30), (Legendary(), 10)],
     2: [(Common(), 60), (Uncommon(), 70), (Rare(), 40), (Legendary(), 15)],
     3: [(Common(), 40), (Uncommon(), 80), (Rare(), 50), (Legendary(), 20)],

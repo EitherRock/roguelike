@@ -5,7 +5,7 @@ import random
 import time
 from typing import Optional, Tuple, Type, TypeVar, TYPE_CHECKING, Union
 from enums.spawn_types import SpawnType
-from components.equippable import Weapon, Unarmed, UnarmedRanged
+from components.equippable import Unarmed, UnarmedRanged, Ammo
 from components.quality import get_random_quality
 
 from enums.render_order import RenderOrder
@@ -82,7 +82,7 @@ class Entity:
                 clone.equippable.quantity = clone.equippable.random_quantity()
 
             if clone.equippable and hasattr(clone.equippable, "quality"):
-                if not isinstance(clone.equippable, Unarmed) or not isinstance(clone.equippable, UnarmedRanged):
+                if not isinstance(clone.equippable, (Unarmed, UnarmedRanged, Ammo)):
                     clone.equippable.quality = get_random_quality(floor_number)
                     clone.color = clone.equippable.quality.color
 

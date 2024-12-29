@@ -3,7 +3,6 @@ from entity import Item
 from enums.weapon_types import WeaponType
 from enums.damage_types import DamageType
 from enums.ammo_types import AmmoType
-from components.quality import Common, Uncommon, Rare, Legendary
 
 
 arrow = Item(
