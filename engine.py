@@ -1,6 +1,7 @@
 from __future__ import annotations
 import lzma
 import pickle
+import time
 from typing import TYPE_CHECKING, Union
 from tcod.console import Console
 from tcod.map import compute_fov
@@ -20,9 +21,14 @@ class Engine:
     def __init__(self, player: Actor):
         self.message_log = MessageLog()
         self.mouse_location = (0, 0)
+        self.start_time = time.time()
+        self.elapsed_time = 0
         self.player = player
         self.game_worlds = {}
         self.active_map = None
+
+    def update_timer(self):
+        self.elapsed_time = time.time() - self.start_time
 
     def handle_enemy_turns(self) -> None:
         for entity in set(self.game_map.actors) - {self.player}:

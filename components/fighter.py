@@ -1,5 +1,6 @@
 from __future__ import annotations
 import random
+import time
 from typing import TYPE_CHECKING, Optional, List
 import colors
 from entity_factories import monster_factory
@@ -186,6 +187,9 @@ class Fighter(BaseComponent):
         return amount_recovered
 
     def take_damage(self, amount: int, damage_type: DamageType, desc: str) -> None:
+        if self.hp <= 0:
+            return  # Prevent processing if already dead.
+
         if self is self.engine.player:
             attack_color = colors.player_atk
         else:
@@ -222,6 +226,10 @@ class Fighter(BaseComponent):
                 f"{desc} for {amount} hit points.", attack_color
             )
 
+        self.parent.hit_timer = .1
+        self.parent.last_hit_time = self.engine.elapsed_time
+        self.parent.color = colors.hit
+
 
 class Slime(Fighter):
 
@@ -234,7 +242,6 @@ class Slime(Fighter):
                 break
             small_slime.spawn(self.engine.game_map, x, y)
 
-        self.engine.message_log.add_message("SLIME IS DEAD", colors.red)
         death_message = f"{self.parent.name} is dead!"
         death_message_color = colors.enemy_die
 

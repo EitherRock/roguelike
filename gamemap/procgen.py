@@ -62,7 +62,8 @@ locked_room_item_chances: Dict[int, List[Tuple[Entity, int]]] = {
 item_chances: Dict[int, List[Tuple[Entity, int]]] = {
     0: [
         (item_factory.health_potion, 20),
-        (weapon_factory.bow, 5),
+        (weapon_factory.bow, 50),
+        (weapon_factory.long_bow, 50),
         (weapon_factory.arrow, 15),
         (weapon_factory.rock, 30),
         (item_factory.firebolt_scroll, 50),
@@ -300,7 +301,7 @@ def generate_dungeon(
         map_width: int,
         map_height: int,
         engine: Engine,
-) -> tuple[GameMap, list[RectangularRoom]]:
+) -> GameMap:
     """Generate a new dungeon map."""
     player = engine.player
     dungeon = GameMap(engine, map_width, map_height, entities=[player])
@@ -368,14 +369,14 @@ def generate_dungeon(
         # Finally, append the new room to the list.
         rooms.append(new_room)
 
-    keys = find_and_mark_doors(dungeon, rooms, floor_num=floor_num)
+    keys: List[Key] = find_and_mark_doors(dungeon, rooms, floor_num=floor_num)
 
     for room in rooms:
         place_entities(room, dungeon, engine.game_world.current_floor)
 
     distribute_keys(keys, rooms)
 
-    return dungeon, rooms
+    return dungeon
 
 
 def distribute_keys(keys: List[Key], rooms: List[RectangularRoom]) -> None:

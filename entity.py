@@ -47,10 +47,13 @@ class Entity:
         self.y = y
         self.char = char
         self.color = color
+        self.original_color = color
         self.name = name
         self.blocks_movement = blocks_movement
         self.render_order = render_order
         self.last_move_time = 0  # time of last movement
+        self.hit_timer = 0
+        self.last_hit_time = None
         self.move_cooldown = move_cooldown  # cooldown in seconds
         self.spawn_type = spawn_type
 
@@ -122,6 +125,14 @@ class Entity:
             self.x += dx
             self.y += dy
             self.last_move_time = current_time  # Update the last movement time
+
+    def update_hit_effect(self, current_time: float):
+        """Update the hit effect based on elapsed time since the last hit."""
+        if self.last_hit_time is not None:
+            time_since_hit = current_time - self.last_hit_time
+            if time_since_hit >= self.hit_timer:
+                self.color = self.original_color  # Revert to original color after duration
+                self.last_hit_time = None  # Reset the hit time
 
 
 class Actor(Entity):
