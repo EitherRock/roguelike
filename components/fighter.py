@@ -1,7 +1,9 @@
 from __future__ import annotations
+import random
+import time
 from typing import TYPE_CHECKING, Optional, List
 import colors
-import entity_factories
+from entity_factories import monster_factory
 from components.base_component import BaseComponent
 from enums.damage_types import DamageType
 from enums.weapon_types import WeaponType
@@ -24,9 +26,11 @@ class Fighter(BaseComponent):
             immunities: Optional[List[DamageType]] = None,
             allowed_weapon_types: Optional[List[WeaponType]] = None,
             field_of_view: Optional[int] = None,
-            flying: bool = False
+            flying: bool = False,
+            critical_chance: float = 0.1,
+            critical_multiplier: float = 1.5
     ):
-        self.max_hp = hp
+        self.base_max_hp = hp
         self._hp = hp
         self.base_defense = base_defense
         self.base_power = base_power
@@ -36,6 +40,8 @@ class Fighter(BaseComponent):
         self.resistances = resistances or []
         self.immunities = immunities or []
         self._allowed_weapon_types = allowed_weapon_types or []
+        self.base_critical_chance = critical_chance
+        self.base_critical_multiplier = critical_multiplier
 
     @property
     def allowed_weapon_types(self) -> List[WeaponType]:
@@ -47,6 +53,10 @@ class Fighter(BaseComponent):
     @property
     def hp(self) -> int:
         return self._hp
+
+    @property
+    def max_hp(self) -> int:
+        return self.base_max_hp + self.health_bonus
 
     @hp.setter
     def hp(self, value: int) -> None:
@@ -75,10 +85,32 @@ class Fighter(BaseComponent):
         return self.base_attack_range + self.rang_dist_bonus
 
     @property
+    def critical_chance(self) -> float:
+        return self.base_critical_chance + self.critical_chance_bonus
+
+    @property
+    def critical_multiplier(self) -> float:
+        return self.base_critical_multiplier + self.critical_multiplier_bonus
+
+    @property
     def defense_bonus(self) -> int:
         bonus = 0
         if self.parent.equipment:
             bonus += self.parent.equipment.defence_bonus
+        return bonus
+
+    @property
+    def critical_chance_bonus(self) -> float:
+        bonus = 0
+        if self.parent.equipment:
+            bonus += self.parent.equipment.critical_chance_bonus
+        return bonus
+
+    @property
+    def critical_multiplier_bonus(self) -> float:
+        bonus = 0
+        if self.parent.equipment:
+            bonus += self.parent.equipment.critical_multiplier_bonus
         return bonus
 
     @property
@@ -106,6 +138,13 @@ class Fighter(BaseComponent):
     def fov_bonus(self) -> int:
         if self.parent.equipment:
             return self.parent.equipment.fov_bonus
+        else:
+            return 0
+
+    @property
+    def health_bonus(self) -> int:
+        if self.parent.equipment:
+            return self.parent.equipment.health_bonus
         else:
             return 0
 
@@ -148,13 +187,24 @@ class Fighter(BaseComponent):
         return amount_recovered
 
     def take_damage(self, amount: int, damage_type: DamageType, desc: str) -> None:
+        if self.hp <= 0:
+            return  # Prevent processing if already dead.
+
         if self is self.engine.player:
             attack_color = colors.player_atk
         else:
             attack_color = colors.enemy_atk
 
+        # Didja get a crit?
+        crit = random.random() < self.critical_chance
+
         if damage_type in self.resistances:
             amount = amount // 2
+
+            if crit:
+                self.engine.message_log.add_message("CRIT!", attack_color)
+                amount *= self.critical_multiplier
+
             self.hp -= max(0, int(amount))
             self.engine.message_log.add_message(
                 f"{desc} but {self.parent.name} is RESISTANT to {damage_type.name} and only takes {amount} damage.",
@@ -167,16 +217,24 @@ class Fighter(BaseComponent):
                     attack_color
                 )
         else:
+            if crit:
+                self.engine.message_log.add_message("CRIT!", attack_color)
+                amount *= self.critical_multiplier
+
             self.hp -= max(0, int(amount))
             self.engine.message_log.add_message(
                 f"{desc} for {amount} hit points.", attack_color
             )
 
+        self.parent.hit_timer = .1
+        self.parent.last_hit_time = self.engine.elapsed_time
+        self.parent.color = colors.hit
+
 
 class Slime(Fighter):
 
     def die(self) -> None:
-        small_slime = entity_factories.small_slime
+        small_slime = monster_factory.small_slime
         valid_locations = self.find_valid_spawn_locations()
 
         for i, (x, y) in enumerate(valid_locations):
@@ -184,7 +242,6 @@ class Slime(Fighter):
                 break
             small_slime.spawn(self.engine.game_map, x, y)
 
-        self.engine.message_log.add_message("SLIME IS DEAD", colors.red)
         death_message = f"{self.parent.name} is dead!"
         death_message_color = colors.enemy_die
 

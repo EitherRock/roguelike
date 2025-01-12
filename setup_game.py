@@ -8,11 +8,12 @@ from typing import Optional
 import tcod
 import colors
 from engine import Engine
-import entity_factories
+from entity_factories import weapon_factory, armor_factory, item_factory, monster_factory
 from gamemap.game_map import DungeonWorld, OverWorld
 import input_handlers
 from tcod import libtcodpy
 from util import resource_path
+from components.quality import get_random_quality
 
 
 # Load the background image and remove the apha channel.
@@ -28,7 +29,7 @@ def new_game() -> Engine:
     room_min_size = 6
     max_rooms = 30
 
-    player = copy.deepcopy(entity_factories.player)
+    player = copy.deepcopy(monster_factory.player)
 
     engine = Engine(player=player)
     engine.game_worlds["dungeon"] = DungeonWorld(
@@ -49,22 +50,32 @@ def new_game() -> Engine:
     engine.switch_maps("world")
     engine.game_world = engine.active_map
 
-    # engine.game_world.generate_floor()
     engine.game_world.generate()
 
     engine.message_log.add_message(
         "Hello and welcome, adventurer, to the dungeon!", colors.welcome_text
     )
 
-    dagger = copy.deepcopy(entity_factories.dagger)
-    club = copy.deepcopy(entity_factories.club)
-    leather_armor = copy.deepcopy(entity_factories.leather_armor)
-    lantern = copy.deepcopy(entity_factories.lantern)
+    dagger = copy.deepcopy(weapon_factory.dagger)
+    club = copy.deepcopy(weapon_factory.club)
+    leather_armor = copy.deepcopy(armor_factory.leather_armor)
+    lantern = copy.deepcopy(item_factory.lantern)
+    torch = copy.deepcopy(item_factory.torch)
+    candle = copy.deepcopy(item_factory.candle)
+
+    leather_armor.equippable.quality = get_random_quality(1)
+    dagger.equippable.quality = get_random_quality(1)
+    club.equippable.quality = get_random_quality(1)
+    print(club.equippable.attributes)
+    print(dagger.equippable.attributes)
+    print(leather_armor.equippable.attributes)
 
     dagger.parent = player.inventory
     club.parent = player.inventory
     leather_armor.parent = player.inventory
     lantern.parent = player.inventory
+    torch.parent = player.inventory
+    candle.parent = player.inventory
 
     player.inventory.items.append(dagger)
     player.equipment.toggle_equip(dagger, add_message=False)
@@ -76,7 +87,10 @@ def new_game() -> Engine:
     player.equipment.toggle_equip(leather_armor, add_message=False)
 
     player.inventory.items.append(lantern)
-    player.equipment.toggle_equip(lantern, add_message=False)
+    # player.equipment.toggle_equip(lantern, add_message=False)
+
+    player.inventory.items.append(torch)
+    player.inventory.items.append(candle)
 
     engine.update_fov()
 

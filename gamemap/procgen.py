@@ -4,13 +4,15 @@ import copy
 import random
 from typing import Dict, Iterator, List, Tuple, TYPE_CHECKING
 import tcod
-import entity_factories
+from entity_factories import weapon_factory, item_factory, monster_factory, armor_factory
 from gamemap.game_map import GameMap
 from gamemap.environment_objects import Door, Stairs
 from gamemap import tile_types
 from enums.spawn_types import SpawnType
 from enums.room_types import RoomType
 from components.consumable import Key
+from components.equippable import Weapon, Unarmed, UnarmedRanged
+from components.quality import get_random_quality
 
 
 if TYPE_CHECKING:
@@ -19,7 +21,7 @@ if TYPE_CHECKING:
 
 
 max_items_by_floor = [
-    (1, 1),  # test value
+    (1, 10),  # test value
     (4, 2),
     (10, 3),
     (25, 4)
@@ -42,50 +44,62 @@ max_locked_items_by_floor = [
 
 locked_room_item_chances: Dict[int, List[Tuple[Entity, int]]] = {
     0: [
-        (entity_factories.health_potion, 20),
-        (entity_factories.long_bow, 5),
-        (entity_factories.confusion_scroll, 2),
-        (entity_factories.lightning_scroll, 1),
-        (entity_factories.fireball_scroll, 1),
-        (entity_factories.sword, 1),
-        (entity_factories.chain_mail, 1),
-        (entity_factories.arrow, 15),
-        (entity_factories.rock, 30),
+        (item_factory.health_potion, 20),
+        (weapon_factory.long_bow, 5),
+        (item_factory.confusion_scroll, 2),
+        (item_factory.lightning_scroll, 1),
+        (item_factory.fireball_scroll, 1),
+        (item_factory.firebolt_scroll, 1),
+        (weapon_factory.sword, 1),
+        (armor_factory.chain_mail, 1),
+        (weapon_factory.arrow, 15),
+        (weapon_factory.rock, 30),
+        (armor_factory.boots, 30),
+        (armor_factory.helmet, 20)
     ],
 }
 
 item_chances: Dict[int, List[Tuple[Entity, int]]] = {
     0: [
-        (entity_factories.health_potion, 20),
-        (entity_factories.bow, 5),
-        (entity_factories.arrow, 15),
-        (entity_factories.rock, 30)
+        (item_factory.health_potion, 30),
+        (weapon_factory.bow, 50),
+        (weapon_factory.long_bow, 10),
+        (weapon_factory.arrow, 15),
+        (weapon_factory.rock, 30),
+        (item_factory.firebolt_scroll, 20),
+        (armor_factory.boots, 10),
+        (armor_factory.helmet, 10),
+        (weapon_factory.dagger, 10),
+        (weapon_factory.club, 10),
+        (weapon_factory.long_sword, 10),
+        (weapon_factory.axe, 10)
     ],
     2: [
-        (entity_factories.confusion_scroll, 10),
-        (entity_factories.arrow, 25)
+        (item_factory.confusion_scroll, 10),
+        (item_factory.firebolt_scroll, 10),
+        (weapon_factory.arrow, 25)
     ],
     4: [
-        (entity_factories.lightning_scroll, 25),
-        (entity_factories.sword, 5)
+        (item_factory.lightning_scroll, 25),
+        (weapon_factory.sword, 5)
     ],
     6: [
-        (entity_factories.fireball_scroll, 25),
-        (entity_factories.chain_mail, 15)
+        (item_factory.fireball_scroll, 25),
+        (armor_factory.chain_mail, 15)
     ],
 }
 
 enemy_chances: Dict[int, List[Tuple[Entity, int]]] = {
     0: [
-        (entity_factories.orc, 40),
-        (entity_factories.rat, 80),
-        (entity_factories.goblin, 65),
-        (entity_factories.slime, 80)
+        (monster_factory.orc, 40),
+        (monster_factory.rat, 80),
+        (monster_factory.goblin, 65),
+        (monster_factory.slime, 80)
     ],
-    2: [(entity_factories.bat, 60)],
-    3: [(entity_factories.troll, 15)],
-    5: [(entity_factories.troll, 30)],
-    7: [(entity_factories.troll, 60)],
+    2: [(monster_factory.bat, 60)],
+    3: [(monster_factory.troll, 15)],
+    5: [(monster_factory.troll, 30)],
+    7: [(monster_factory.troll, 60)],
 }
 
 
@@ -288,7 +302,7 @@ def generate_dungeon(
         map_width: int,
         map_height: int,
         engine: Engine,
-) -> tuple[GameMap, list[RectangularRoom]]:
+) -> GameMap:
     """Generate a new dungeon map."""
     player = engine.player
     dungeon = GameMap(engine, map_width, map_height, entities=[player])
@@ -356,14 +370,14 @@ def generate_dungeon(
         # Finally, append the new room to the list.
         rooms.append(new_room)
 
-    keys = find_and_mark_doors(dungeon, rooms, floor_num=floor_num)
+    keys: List[Key] = find_and_mark_doors(dungeon, rooms, floor_num=floor_num)
 
     for room in rooms:
         place_entities(room, dungeon, engine.game_world.current_floor)
 
     distribute_keys(keys, rooms)
 
-    return dungeon, rooms
+    return dungeon
 
 
 def distribute_keys(keys: List[Key], rooms: List[RectangularRoom]) -> None:
@@ -406,7 +420,6 @@ def find_and_mark_doors(
         floor_num: int,
 ) -> List[Key]:
     """Find and mark door locations where tunnels connect to rooms."""
-    from entity import Actor
     keys = []
     for room in rooms:
 
@@ -481,7 +494,7 @@ def find_and_mark_doors(
         if adjacent_floors_total == 1:
             if room.room_id != f"{str(floor_num)}_1":
                 x, y = potential_doors[0]
-                key = copy.deepcopy(entity_factories.key)
+                key = copy.deepcopy(item_factory.key)
                 if isinstance(key.consumable, Key):
                     key.consumable.key_id = room.room_id
                     keys.append(key)

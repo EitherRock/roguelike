@@ -88,6 +88,7 @@ class GameMap:
         If it isn't, but it's in the "explored" array, then draw it with the "dark" colors.
         Otherwise, the default is "SHROUD".
         """
+
         console.rgb[0: self.width, 0: self.height] = np.select(
             condlist=[self.visible, self.explored],
             choicelist=[self.tiles["light"], self.tiles["dark"]],
@@ -104,6 +105,14 @@ class GameMap:
                 console.print(
                     x=entity.x, y=entity.y, string=entity.char, fg=entity.color
                 )
+
+    def update_hit_effects(self, current_time):
+        """Update the hit timer for each entity."""
+        # Update each entity's hit effect based on the elapsed time
+        for entity in self.entities:
+            if isinstance(entity, Actor):
+                if entity.is_alive:
+                    entity.update_hit_effect(current_time)
 
 
 class World:
@@ -144,7 +153,6 @@ class DungeonWorld(World):
             map_height=map_height
         )
 
-        # self.rooms: List = []
         self.max_rooms = max_rooms
 
         self.room_min_size = room_min_size
@@ -154,11 +162,11 @@ class DungeonWorld(World):
         self.previous_floors: Dict[int: GameMap] = {}
 
     def generate(self) -> None:
-        from gamemap.procgen import generate_dungeon, find_and_mark_doors
+        from gamemap.procgen import generate_dungeon
 
         self.current_floor += 1
 
-        self.engine.game_map, self.rooms = generate_dungeon(
+        self.engine.game_map = generate_dungeon(
             max_rooms=self.max_rooms,
             room_min_size=self.room_min_size,
             room_max_size=self.room_max_size,

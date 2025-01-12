@@ -4,6 +4,7 @@ from enum import auto, Enum
 class DamageType(Enum):
     PIERCING = auto()
     SLASHING = auto()
+    CLEAVE = auto()
     BLUDGEONING = auto()
     EXPLOSIVE = auto
     FIRE = auto()

@@ -12,6 +12,7 @@ ascend = (0x9F, 0x3F, 0xFF)
 
 player_die = (0xFF, 0x30, 0x30)
 enemy_die = (0xFF, 0xA0, 0x30)
+hit = red
 
 invalid = (0xFF, 0xFF, 0x00)
 impossible = (0x80, 0x80, 0x80)
@@ -24,5 +25,12 @@ bar_text = white
 bar_filled = (0x0, 0x60, 0x0)
 bar_empty = (0x40, 0x10, 0x10)
 
+# Menu
 menu_title = (255, 255, 63)
 menu_text = white
+
+# Quality
+common = white
+uncommon = (0, 230, 0)
+rare = (30, 144, 255)
+legendary = (138, 43, 226)

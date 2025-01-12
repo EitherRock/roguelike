@@ -5,6 +5,8 @@ import random
 import time
 from typing import Optional, Tuple, Type, TypeVar, TYPE_CHECKING, Union
 from enums.spawn_types import SpawnType
+from components.equippable import Unarmed, UnarmedRanged, Ammo
+from components.quality import get_random_quality
 
 from enums.render_order import RenderOrder
 
@@ -17,7 +19,7 @@ if TYPE_CHECKING:
     from components.inventory import Inventory
     from components.level import Level
     from gamemap.game_map import GameMap
-    from entity_factories import weapon_factory
+    from entity_factories.weapon_factory import weapon_factory
 
 T = TypeVar("T", bound="Entity")
 
@@ -45,10 +47,13 @@ class Entity:
         self.y = y
         self.char = char
         self.color = color
+        self.original_color = color
         self.name = name
         self.blocks_movement = blocks_movement
         self.render_order = render_order
         self.last_move_time = 0  # time of last movement
+        self.hit_timer = 0
+        self.last_hit_time = None
         self.move_cooldown = move_cooldown  # cooldown in seconds
         self.spawn_type = spawn_type
 
@@ -61,7 +66,7 @@ class Entity:
     def gamemap(self) -> GameMap:
         return self.parent.gamemap
 
-    def spawn(self: T, gamemap: GameMap, x: int, y: int) -> T:
+    def spawn(self: T, gamemap: GameMap, x: int, y: int, floor_number: int = 0) -> T:
         """Spawn a copy of this instance at the given location."""
         from components.fighter import Fighter
 
@@ -79,11 +84,16 @@ class Entity:
             if clone.equippable and hasattr(clone.equippable, "quantity"):
                 clone.equippable.quantity = clone.equippable.random_quantity()
 
+            if clone.equippable and hasattr(clone.equippable, "quality"):
+                if not isinstance(clone.equippable, (Unarmed, UnarmedRanged, Ammo)):
+                    clone.equippable.quality = get_random_quality(floor_number)
+                    clone.color = clone.equippable.quality.color
+
         gamemap.entities.add(clone)
         return clone
 
     def add_weapon(self, clone, weapon_choice) -> None:
-        from entity_factories import weapon_factory
+        from entity_factories.weapon_factory import weapon_factory
         if weapon_choice in weapon_factory:
             weapon = copy.deepcopy(weapon_factory.get(weapon_choice))
             if weapon:
@@ -115,6 +125,14 @@ class Entity:
             self.x += dx
             self.y += dy
             self.last_move_time = current_time  # Update the last movement time
+
+    def update_hit_effect(self, current_time: float):
+        """Update the hit effect based on elapsed time since the last hit."""
+        if self.last_hit_time is not None:
+            time_since_hit = current_time - self.last_hit_time
+            if time_since_hit >= self.hit_timer:
+                self.color = self.original_color  # Revert to original color after duration
+                self.last_hit_time = None  # Reset the hit time
 
 
 class Actor(Entity):

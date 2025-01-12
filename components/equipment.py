@@ -5,6 +5,7 @@ from enums.equipments_types import EquipmentType
 from enums.damage_types import DamageType
 from util import format_item_name
 from components.equippable import Ammo
+import math
 
 if TYPE_CHECKING:
     from entity import Actor, Item
@@ -18,6 +19,9 @@ class Equipment(BaseComponent):
             self,
             melee_weapon: Optional[Item] = None,
             ranged_weapon: Optional[Item] = None,
+            head: Optional[Item] = None,
+            chest: Optional[Item] = None,
+            boots: Optional[Item] = None,
             armor: Optional[Item] = None,
             utility: Optional[Item] = None,
             ammo: Optional[Item] = None
@@ -25,78 +29,74 @@ class Equipment(BaseComponent):
         self.weapon = melee_weapon
         self.ranged_weapon = ranged_weapon
         self.armor = armor
+        self.head = head
+        self.chest = chest
+        self.boots = boots
         self.utility = utility
         self.ammo = ammo
+
+    def _calculate_bonus(self, bonus_type: str) -> int:
+        """Generic method to calculate bonuses based on the specified type."""
+        bonus = 0
+
+        # Map equipment slots to their items
+        equipment_slots = {
+            "weapon": self.weapon,
+            "ranged_weapon": self.ranged_weapon,
+            "head": self.head,
+            "chest": self.chest,
+            "boots": self.boots,
+            "armor": self.armor,
+            "utility": self.utility,
+            "ammo": self.ammo,
+        }
+
+        # Iterate through equipment slots
+        for item in equipment_slots.values():
+            if item and item.equippable:
+                # Add direct bonuses from the item
+                bonus += getattr(item.equippable, bonus_type, 0)
+
+                # Add bonuses from the item's attributes
+                if hasattr(item.equippable, "attributes"):
+                    attributes = item.equippable.attributes
+                    if isinstance(attributes, list):
+                        for attribute in attributes:
+                            # Check if the attribute name matches the bonus type
+                            if attribute.name in bonus_type:
+                                bonus += attribute.value  # Use the value from the attribute system
+
+        return bonus
 
     @property
     def damage_type(self) -> Optional[DamageType]:
         from components.equippable import Weapon
+
         if self.weapon and isinstance(self.weapon, Weapon):
             return self.weapon.damage_type
         elif self.ranged_weapon and isinstance(self.ranged_weapon, Weapon):
             return self.ranged_weapon.damage_type
+        return None
 
     @property
     def defence_bonus(self) -> int:
-        bonus = 0
+        return math.ceil(self._calculate_bonus("defense_bonus"))
 
-        if self.weapon is not None and self.weapon.equippable is not None:
-            bonus += self.weapon.equippable.defense_bonus
-        if self.ranged_weapon is not None and self.ranged_weapon.equippable is not None:
-            bonus += self.ranged_weapon.equippable.defense_bonus
-        if self.armor is not None and self.armor.equippable is not None:
-            bonus += self.armor.equippable.defense_bonus
-
-        return bonus
+    @property
+    def health_bonus(self):
+        return math.ceil(self._calculate_bonus("health_bonus"))
 
     @property
     def melee_bonus(self) -> int:
-        bonus = 0
-
-        if self.weapon is not None and self.weapon.equippable is not None:
-            bonus += self.weapon.equippable.melee_bonus
-        if self.ranged_weapon is not None and self.ranged_weapon.equippable is not None:
-            bonus += self.ranged_weapon.equippable.melee_bonus
-        if self.utility is not None and self.utility.equippable is not None:
-            bonus += self.utility.equippable.melee_bonus
-        if self.armor is not None and self.armor.equippable is not None:
-            bonus += self.armor.equippable.melee_bonus
-
-        return bonus
+        return math.ceil(self._calculate_bonus("melee_bonus"))
 
     @property
     def range_dmg_bonus(self) -> int:
-        bonus = 0
-
-        if self.ranged_weapon is not None and self.ranged_weapon.equippable is not None:
-            bonus += self.ranged_weapon.equippable.range_dmg_bonus
-        if self.weapon is not None and self.weapon.equippable is not None:
-            bonus += self.weapon.equippable.range_dmg_bonus
-        if self.ammo is not None and self.ammo.equippable is not None:
-            bonus += self.ammo.equippable.range_dmg_bonus
-        if self.armor is not None and self.armor.equippable is not None:
-            bonus += self.armor.equippable.range_dmg_bonus
-        if self.utility is not None and self.utility.equippable is not None:
-            bonus += self.utility.equippable.range_dmg_bonus
-
-        return bonus
+        return math.ceil(self._calculate_bonus("range_dmg_bonus"))
 
     @property
     def range_dist_bonus(self) -> int:
-        bonus = 0
-
-        if self.ranged_weapon is not None and self.ranged_weapon.equippable is not None:
-            bonus += self.ranged_weapon.equippable.range_dist_bonus
-        if self.weapon is not None and self.weapon.equippable is not None:
-            bonus += self.weapon.equippable.range_dist_bonus
-        if self.ammo is not None and self.ammo.equippable is not None:
-            bonus += self.ammo.equippable.range_dist_bonus
-        if self.armor is not None and self.armor.equippable is not None:
-            bonus += self.armor.equippable.range_dist_bonus
-        if self.utility is not None and self.utility.equippable is not None:
-            bonus += self.utility.equippable.range_dist_bonus
-
-        return bonus
+        return math.ceil(self._calculate_bonus("range_dist_bonus"))
 
     @property
     def fov_bonus(self) -> int:
@@ -107,9 +107,19 @@ class Equipment(BaseComponent):
 
         return bonus
 
+    @property
+    def critical_multiplier_bonus(self) -> float:
+        return self._calculate_bonus("critical_multiplier_bonus")
+
+    @property
+    def critical_chance_bonus(self) -> float:
+        return self._calculate_bonus("critical_chance_bonus")
+
     def item_is_equipped(self, item: Item) -> bool:
         return self.weapon == item \
-            or self.armor == item \
+            or self.head == item \
+            or self.chest == item \
+            or self.boots == item \
             or self.utility == item \
             or self.ranged_weapon == item \
             or self.ammo == item
@@ -152,6 +162,8 @@ class Equipment(BaseComponent):
     def toggle_equip(self, equippable_item: Item, add_message: bool = True) -> None:
         from components.equippable import Weapon
         from enums.weapon_distances import WeaponDistanceType
+
+        # Weapon slots melee and ranged
         if (
             equippable_item.equippable
             and equippable_item.equippable.equipment_type == EquipmentType.WEAPON
@@ -161,23 +173,42 @@ class Equipment(BaseComponent):
                     slot = "weapon"
                 elif equippable_item.equippable.weapon_range == WeaponDistanceType.RANGED:
                     slot = "ranged_weapon"
+
+        # Utility slot
         elif (
             equippable_item.equippable
             and equippable_item.equippable.equipment_type == EquipmentType.UTILITY
         ):
             slot = "utility"
+
+        # Ammo slot
         elif (
                 equippable_item.equippable
                 and equippable_item.equippable.equipment_type == EquipmentType.AMMO
         ):
             slot = "ammo"
-        else:
-            slot = "armor"
+
+        # Head slot
+        elif (
+            equippable_item.equippable
+            and equippable_item.equippable.equipment_type == EquipmentType.HEAD
+        ):
+            slot = "head"
+
+        elif (
+            equippable_item.equippable
+            and equippable_item.equippable.equipment_type == EquipmentType.CHEST
+        ):
+            slot = "chest"
+
+        elif (
+            equippable_item.equippable
+            and equippable_item.equippable.equipment_type == EquipmentType.BOOTS
+        ):
+            slot = "boots"
 
         if getattr(self, slot) == equippable_item:
             self.unequip_from_slot(slot, add_message)
         else:
             self.equip_to_slot(slot, equippable_item, add_message)
 
-    def __str__(self):
-        return f"Weapon: {self.weapon}, Armor: {self.armor}"

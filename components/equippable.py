@@ -6,6 +6,7 @@ from enums.weapon_types import WeaponType
 from enums.weapon_distances import WeaponDistanceType
 from enums.damage_types import DamageType
 from enums.ammo_types import AmmoType
+from components.quality import Quality, Common, Uncommon, Rare, Legendary
 import random
 
 if TYPE_CHECKING:
@@ -22,7 +23,8 @@ class Equippable(BaseComponent):
         range_dmg_bonus: int = 0,
         range_dist_bonus: int = 0,
         defense_bonus: int = 0,
-        fov_bonus: int = 0
+        fov_bonus: int = 0,
+        quality: Optional[Quality] = None
     ):
         self.equipment_type = equipment_type
 
@@ -33,12 +35,34 @@ class Equippable(BaseComponent):
 
         self.fov_bonus = fov_bonus
 
+        self._quality = quality
+        self.attributes = quality.generate_attributes() if quality else []
+        self.magic_ability = quality.generate_magical_ability() if quality else None
+
+    @property
+    def quality(self) -> Optional[Quality]:
+        return self._quality
+
+    @quality.setter
+    def quality(self, new_quality: Quality) -> None:
+        self._quality = new_quality
+
+        # Update attributes and magical abilities based on the new quality
+        if new_quality:
+            self.attributes = new_quality.generate_attributes()
+            self.magic_ability = new_quality.generate_magical_ability()
+        else:
+            # Reset attributes if no quality is provided
+            self.attributes = []
+            self.magic_ability = None
+
 
 class Weapon(Equippable):
     def __init__(
         self,
         weapon_range: WeaponDistanceType,
         weapon_type: WeaponType,
+        quality: Optional[Quality] = None,
         damage_type: Optional[DamageType] = None,
         melee_bonus: int = 0,
         range_dmg_bonus: int = 0,
@@ -59,6 +83,7 @@ class Weapon(Equippable):
             melee_bonus=melee_bonus,
             defense_bonus=defense_bonus,
             fov_bonus=fov_bonus,
+            quality=quality
         )
         self.weapon_range = weapon_range
         self.weapon_type = weapon_type
@@ -92,65 +117,93 @@ class UnarmedRanged(Weapon):
 class Bow(Weapon):
     def __init__(
             self,
-            ammo_type: AmmoType.ARROW,
             range_dmg_bonus: int,
-            range_dist_bonus: int
+            range_dist_bonus: int,
+            quality: Quality = None,
+            ammo_type: AmmoType = AmmoType.ARROW,
     ) -> None:
         super().__init__(
             weapon_range=WeaponDistanceType.RANGED,
             weapon_type=WeaponType.BOW,
-            damage_type=DamageType.BLUDGEONING,
+            damage_type=DamageType.PIERCING,
             range_dmg_bonus=range_dmg_bonus,
-            range_dist_bonus=range_dist_bonus
+            range_dist_bonus=range_dist_bonus,
+            quality=quality
         )
         self.ammo_type = ammo_type
 
 
 class Dagger(Weapon):
     def __init__(
-            self
+            self,
+            quality: Quality = None,
+            melee_dmg: int = 2
     ) -> None:
         super().__init__(
             weapon_range=WeaponDistanceType.MELEE,
             weapon_type=WeaponType.DAGGER,
             damage_type=DamageType.SLASHING,
-            melee_bonus=2
+            melee_bonus=melee_dmg,
+            quality=quality
         )
 
 
 class Sword(Weapon):
-    def __init__(self) -> None:
+    def __init__(self, quality: Quality = None, melee_dmg: int = 4) -> None:
         super().__init__(
             weapon_range=WeaponDistanceType.MELEE,
             weapon_type=WeaponType.SWORD,
             damage_type=DamageType.SLASHING,
-            melee_bonus=4
+            melee_bonus=melee_dmg,
+            quality=quality
         )
 
 
 class Club(Weapon):
-    def __init__(self) -> None:
+    def __init__(self, quality: Quality = None, melee_dmg: int = 4) -> None:
         super().__init__(
             weapon_range=WeaponDistanceType.MELEE,
             weapon_type=WeaponType.CLUB,
             damage_type=DamageType.BLUDGEONING,
-            melee_bonus=4
+            melee_bonus=melee_dmg,
+            quality=quality
             )
 
 
+class Axe(Weapon):
+    def __init__(self, quality: Quality = None, melee_dmg: int = 4) -> None:
+        super().__init__(
+            weapon_range=WeaponDistanceType.MELEE,
+            weapon_type=WeaponType.CLUB,
+            damage_type=DamageType.CLEAVE,
+            melee_bonus=melee_dmg,
+            quality=quality
+        )
+
+
 class LeatherArmor(Equippable):
-    def __init__(self) -> None:
-        super().__init__(equipment_type=EquipmentType.ARMOR, defense_bonus=1)
+    def __init__(self, quality: Quality = None) -> None:
+        super().__init__(equipment_type=EquipmentType.CHEST, defense_bonus=1, quality=quality)
 
 
 class ChainMail(Equippable):
-    def __init__(self) -> None:
-        super().__init__(equipment_type=EquipmentType.ARMOR, defense_bonus=3)
+    def __init__(self, quality: Quality = None) -> None:
+        super().__init__(equipment_type=EquipmentType.CHEST, defense_bonus=3, quality=quality)
 
 
-class Lantern(Equippable):
-    def __init__(self) -> None:
-        super().__init__(equipment_type=EquipmentType.UTILITY, fov_bonus=5)
+class Helmet(Equippable):
+    def __init__(self, quality: Quality = None) -> None:
+        super().__init__(equipment_type=EquipmentType.HEAD, defense_bonus=1, quality=quality)
+
+
+class Boots(Equippable):
+    def __init__(self, quality: Quality = None) -> None:
+        super().__init__(equipment_type=EquipmentType.BOOTS, defense_bonus=1, quality=quality)
+
+
+class LightSource(Equippable):
+    def __init__(self, fov_bonus: int) -> None:
+        super().__init__(equipment_type=EquipmentType.UTILITY, fov_bonus=fov_bonus)
 
 
 class Ammo(Equippable):

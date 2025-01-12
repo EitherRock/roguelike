@@ -7,3 +7,7 @@ class EquipmentType(Enum):
     ARMOR = auto()
     UTILITY = auto()
     AMMO = auto()
+    HEAD = auto()
+    CHEST = auto()
+    BOOTS = auto()
+

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import traceback
 import tcod
+import time
 import colors
 import exceptions
 import input_handlers
@@ -39,8 +40,12 @@ def main() -> None:
                 handler.on_render(console=root_console)
                 context.present(root_console)
 
+                if isinstance(handler, input_handlers.EventHandler):
+                    handler.engine.update_timer()
+                    handler.engine.game_map.update_hit_effects(handler.engine.elapsed_time)
+
                 try:
-                    for event in tcod.event.wait():
+                    for event in tcod.event.get():
                         context.convert_event(event)
                         handler = handler.handle_events(event)
                 except Exception:  # Handle execption in game.

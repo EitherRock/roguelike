@@ -27,6 +27,12 @@ def get_names_at_location(x: int, y: int, game_map: GameMap) -> str:
                         names.append(
                             f"{format_item_name(entity.name, quantity)} x{quantity}"
                         )
+
+                    elif hasattr(entity.equippable, "quality"):
+                        attributes = ", ".join(f"+{attr}" for attr in entity.equippable.attributes)
+                        names.append(
+                            f"{entity.equippable.quality} {entity.name} ({attributes}) "
+                        )
                     else:
                         names.append(entity.name)
 
