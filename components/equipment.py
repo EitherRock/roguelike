@@ -5,6 +5,7 @@ from enums.equipments_types import EquipmentType
 from enums.damage_types import DamageType
 from util import format_item_name
 from components.equippable import Ammo
+import math
 
 if TYPE_CHECKING:
     from entity import Actor, Item
@@ -38,7 +39,7 @@ class Equipment(BaseComponent):
         """Generic method to calculate bonuses based on the specified type."""
         bonus = 0
 
-        # Map equipment slots to their attributes
+        # Map equipment slots to their items
         equipment_slots = {
             "weapon": self.weapon,
             "ranged_weapon": self.ranged_weapon,
@@ -50,39 +51,21 @@ class Equipment(BaseComponent):
             "ammo": self.ammo,
         }
 
-        # Bonus mapping for quality attributes
-        attribute_bonus_map = {
-            "Defence": "defense_bonus",
-            "Melee DMG": "melee_bonus",
-            "Ranged DMG": "range_dmg_bonus",
-            "Ranged Dist": "range_dist_bonus",
-            "Health": "health_bonus",
-            "Critical DMG": "critical_multiplier_bonus",
-            "Critical Hit Chance": "critical_chance_bonus"
-
-        }
-
-        # Iterate through equipment and sum up the bonuses
+        # Iterate through equipment slots
         for item in equipment_slots.values():
             if item and item.equippable:
+                # Add direct bonuses from the item
                 bonus += getattr(item.equippable, bonus_type, 0)
 
-                # Add bonuses from quality attributes
+                # Add bonuses from the item's attributes
                 if hasattr(item.equippable, "attributes"):
-                    attributes = getattr(item.equippable, "attributes", [])
-                    if not isinstance(attributes, list):
-                        attributes = []
+                    attributes = item.equippable.attributes
+                    if isinstance(attributes, list):
+                        for attribute in attributes:
+                            # Check if the attribute name matches the bonus type
+                            if attribute.name in bonus_type:
+                                bonus += attribute.value  # Use the value from the attribute system
 
-                    for attribute in attributes:
-                        # Match the attribute to its corresponding bonus type
-                        mapped_bonus = attribute_bonus_map.get(attribute)
-
-                        if mapped_bonus == bonus_type:
-                            # Add an additional fixed value or derived value (e.g., +2 per attribute)
-                            if mapped_bonus == "Critical Hit Chance":  # fix this later, shouldn't be hardcoded here
-                                bonus += .05
-                            else:
-                                bonus += 2  # Adjust this value based on your design
         return bonus
 
     @property
@@ -97,23 +80,23 @@ class Equipment(BaseComponent):
 
     @property
     def defence_bonus(self) -> int:
-        return self._calculate_bonus("defense_bonus")
+        return math.ceil(self._calculate_bonus("defense_bonus"))
 
     @property
     def health_bonus(self):
-        return self._calculate_bonus("health_bonus")
+        return math.ceil(self._calculate_bonus("health_bonus"))
 
     @property
     def melee_bonus(self) -> int:
-        return self._calculate_bonus("melee_bonus")
+        return math.ceil(self._calculate_bonus("melee_bonus"))
 
     @property
     def range_dmg_bonus(self) -> int:
-        return self._calculate_bonus("range_dmg_bonus")
+        return math.ceil(self._calculate_bonus("range_dmg_bonus"))
 
     @property
     def range_dist_bonus(self) -> int:
-        return self._calculate_bonus("range_dist_bonus")
+        return math.ceil(self._calculate_bonus("range_dist_bonus"))
 
     @property
     def fov_bonus(self) -> int:

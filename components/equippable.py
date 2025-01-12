@@ -165,9 +165,20 @@ class Club(Weapon):
             weapon_range=WeaponDistanceType.MELEE,
             weapon_type=WeaponType.CLUB,
             damage_type=DamageType.BLUDGEONING,
-            melee_bonus=4,
+            melee_bonus=melee_dmg,
             quality=quality
             )
+
+
+class Axe(Weapon):
+    def __init__(self, quality: Quality = None, melee_dmg: int = 4) -> None:
+        super().__init__(
+            weapon_range=WeaponDistanceType.MELEE,
+            weapon_type=WeaponType.CLUB,
+            damage_type=DamageType.CLEAVE,
+            melee_bonus=melee_dmg,
+            quality=quality
+        )
 
 
 class LeatherArmor(Equippable):
@@ -190,9 +201,9 @@ class Boots(Equippable):
         super().__init__(equipment_type=EquipmentType.BOOTS, defense_bonus=1, quality=quality)
 
 
-class Lantern(Equippable):
-    def __init__(self) -> None:
-        super().__init__(equipment_type=EquipmentType.UTILITY, fov_bonus=5)
+class LightSource(Equippable):
+    def __init__(self, fov_bonus: int) -> None:
+        super().__init__(equipment_type=EquipmentType.UTILITY, fov_bonus=fov_bonus)
 
 
 class Ammo(Equippable):

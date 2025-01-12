@@ -35,6 +35,12 @@ long_sword = Item(
     equippable=equippable.Sword(melee_dmg=6)
 )
 
+axe = Item(
+    char="/",
+    name='Axe',
+    equippable=equippable.Axe()
+)
+
 club = Item(char="/", name="Club", equippable=equippable.Club())
 
 unarmed = Item(char="/", color=(0, 191, 255), name="Unarmed", equippable=equippable.Unarmed())

@@ -2,30 +2,31 @@ import random
 from typing import Dict, List, Tuple
 
 import colors
+from components import attributes
 
 
 class Quality:
-    def __init__(self, name, color, max_attributes, has_magical_ability=False):
+    def __init__(self, name, color, max_attributes, multiplier=1.0, has_magical_ability=False):
         self.name = name
         self.color = color
         self.max_attributes = max_attributes
+        self.multiplier = multiplier
         self.has_magical_ability = has_magical_ability
 
     def generate_attributes(self):
-        """Randomly generate attributes based on the maximum allowed."""
-        all_attributes = [
-            "Health",
-            "Defence",
-            # "Hit Chance",
-            # "Dodge Chance",
-            "Critical DMG",
-            "Critical Hit Chance",
-            # "Move Cooldown",
-            "Melee DMG",
-            "Ranged DMG",
-            "Ranged Dist"
+        """Generate attributes using the quality multiplier."""
+        attribute_classes = [
+            attributes.HealthAttribute,
+            attributes.DefenceAttribute,
+            attributes.CriticalDMGAttribute,
+            attributes.MeleeDMGAttribute,
+            attributes.CriticalChanceAttribute,
+            attributes.RangeDMGAttribute,
+            attributes.RangeDISTAttribute,
+
         ]
-        return random.sample(all_attributes, k=self.max_attributes)
+        selected_classes = random.sample(attribute_classes, k=self.max_attributes)
+        return [attr_class(self.multiplier) for attr_class in selected_classes]
 
     def generate_magical_ability(self):
         """Randomly assign a magical ability if applicable."""
@@ -45,24 +46,30 @@ class Common(Quality):
 
 class Uncommon(Quality):
     def __init__(self):
-        super().__init__(name="Uncommon", color=colors.uncommon, max_attributes=2)
+        super().__init__(name="Uncommon", color=colors.uncommon, multiplier=1.5, max_attributes=2)
 
 
 class Rare(Quality):
     def __init__(self):
-        super().__init__(name="Rare", color=colors.rare, max_attributes=1, has_magical_ability=True)
+        super().__init__(name="Rare", color=colors.rare, max_attributes=1, multiplier=2.0, has_magical_ability=True)
 
 
 class Legendary(Quality):
     def __init__(self):
-        super().__init__(name="Legendary", color=colors.legendary, max_attributes=2, has_magical_ability=True)
+        super().__init__(
+            name="Legendary",
+            color=colors.legendary,
+            max_attributes=2,
+            multiplier=2.5,
+            has_magical_ability=True
+        )
 
 
 quality_chances: Dict[int, List[Tuple[Quality, int]]] = {
     0: [(Common(), 100), (Uncommon(), 50), (Rare(), 20), (Legendary(), 5)],
-    1: [(Common(), 80), (Uncommon(), 60), (Rare(), 30), (Legendary(), 10)],
-    2: [(Common(), 60), (Uncommon(), 70), (Rare(), 40), (Legendary(), 15)],
-    3: [(Common(), 40), (Uncommon(), 80), (Rare(), 50), (Legendary(), 20)],
+    4: [(Common(), 80), (Uncommon(), 60), (Rare(), 30), (Legendary(), 10)],
+    8: [(Common(), 60), (Uncommon(), 70), (Rare(), 40), (Legendary(), 15)],
+    12: [(Common(), 40), (Uncommon(), 80), (Rare(), 50), (Legendary(), 20)],
 }
 
 

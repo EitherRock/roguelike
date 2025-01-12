@@ -60,6 +60,8 @@ def new_game() -> Engine:
     club = copy.deepcopy(weapon_factory.club)
     leather_armor = copy.deepcopy(armor_factory.leather_armor)
     lantern = copy.deepcopy(item_factory.lantern)
+    torch = copy.deepcopy(item_factory.torch)
+    candle = copy.deepcopy(item_factory.candle)
 
     leather_armor.equippable.quality = get_random_quality(1)
     dagger.equippable.quality = get_random_quality(1)
@@ -72,6 +74,8 @@ def new_game() -> Engine:
     club.parent = player.inventory
     leather_armor.parent = player.inventory
     lantern.parent = player.inventory
+    torch.parent = player.inventory
+    candle.parent = player.inventory
 
     player.inventory.items.append(dagger)
     player.equipment.toggle_equip(dagger, add_message=False)
@@ -83,7 +87,10 @@ def new_game() -> Engine:
     player.equipment.toggle_equip(leather_armor, add_message=False)
 
     player.inventory.items.append(lantern)
-    player.equipment.toggle_equip(lantern, add_message=False)
+    # player.equipment.toggle_equip(lantern, add_message=False)
+
+    player.inventory.items.append(torch)
+    player.inventory.items.append(candle)
 
     engine.update_fov()
 

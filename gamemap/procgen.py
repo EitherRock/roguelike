@@ -61,17 +61,18 @@ locked_room_item_chances: Dict[int, List[Tuple[Entity, int]]] = {
 
 item_chances: Dict[int, List[Tuple[Entity, int]]] = {
     0: [
-        (item_factory.health_potion, 20),
+        (item_factory.health_potion, 30),
         (weapon_factory.bow, 50),
-        (weapon_factory.long_bow, 50),
+        (weapon_factory.long_bow, 10),
         (weapon_factory.arrow, 15),
         (weapon_factory.rock, 30),
-        (item_factory.firebolt_scroll, 50),
-        (armor_factory.boots, 50),
-        (armor_factory.helmet, 50),
-        (weapon_factory.dagger, 60),
-        (weapon_factory.club, 60),
-        (weapon_factory.long_sword, 80)
+        (item_factory.firebolt_scroll, 20),
+        (armor_factory.boots, 10),
+        (armor_factory.helmet, 10),
+        (weapon_factory.dagger, 10),
+        (weapon_factory.club, 10),
+        (weapon_factory.long_sword, 10),
+        (weapon_factory.axe, 10)
     ],
     2: [
         (item_factory.confusion_scroll, 10),

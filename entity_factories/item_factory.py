@@ -3,7 +3,15 @@ from entity import Item
 
 
 lantern = Item(
-    char="*", color=(255, 255, 0), name="Lantern", equippable=equippable.Lantern()
+    char="*", color=(255, 255, 0), name="Lantern", equippable=equippable.LightSource(fov_bonus=5)
+)
+
+torch = Item(
+    char="*", color=(255, 255, 0), name="Torch", equippable=equippable.LightSource(fov_bonus=3)
+)
+
+candle = Item(
+    char="*", color=(255, 255, 0), name="Candle", equippable=equippable.LightSource(fov_bonus=1)
 )
 
 key = Item(
